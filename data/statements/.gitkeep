@@ -1,0 +1,3 @@
+# Place your HDFC bank statement Excel files (.xls) here
+# Files in this directory are excluded from git for security reasons
+# Expected format: Acct_Statement_XXXXXXXX####_DDMMYYYY.xls

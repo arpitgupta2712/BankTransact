@@ -182,14 +182,16 @@ $RECYCLE.BIN/
 *.swp
 *.swo
 
-# Project specific
-# Excel statement files (if sensitive)
-# data/statements/*.xls
-# data/statements/*.xlsx
+# Project specific - exclude sensitive financial data
+# Excel statement files (sensitive bank data)
+data/statements/*.xls
+data/statements/*.xlsx
 
-# Output files (optional - you might want to track these)
-# data/consolidated_bank_statements.csv
-# data/consolidation_summary.txt
+# Output files (contain sensitive financial information)
+data/consolidated_bank_statements.csv
+data/consolidation_summary.txt
+data/*.csv
+data/*.txt
 
 # Sensitive data
 config.py
