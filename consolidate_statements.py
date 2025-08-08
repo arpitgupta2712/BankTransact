@@ -280,8 +280,8 @@ class HDFCStatementProcessor:
         
         # Reorder columns for better readability (added serial_no, account_name, net_transaction, and transaction_classification)
         column_order = [
-            'serial_no', 'account_number', 'account_name', 'date', 'narration', 'reference_number', 
-            'transaction_type', 'withdrawal_amount', 'deposit_amount', 'net_transaction', 'transaction_classification'
+            'serial_no', 'account_name', 'account_number', 'date', 'narration', 'reference_number', 
+            'transaction_type', 'transaction_classification', 'withdrawal_amount', 'deposit_amount', 'net_transaction'
         ]
         df = df[column_order]
         
