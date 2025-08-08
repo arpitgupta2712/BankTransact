@@ -210,50 +210,70 @@ class HDFCStatementProcessor:
         # Merge back to main dataframe
         df = df.merge(ref_stats, on='reference_number', how='left')
         
-        # Determine transaction classification
-        def classify_transaction(row):
-            # For single transactions, always classify as Unique
-            if row['count'] == 1:
-                return 'Unique'
+        # Helper function to find reversal groups within a set of transactions
+        def find_reversal_groups(transactions):
+            """
+            Find the largest subset of transactions that sum to approximately 0.
+            Returns indices of transactions that form reversal groups.
+            """
+            amounts = transactions['net_transaction'].values
+            indices = list(range(len(amounts)))
             
-            # For multiple transactions with same reference number
-            if row['count'] > 1:
-                # Check if transactions are across different accounts
-                if row['unique_accounts'] > 1:
-                    # Inter-account transfers should have net sum ~= 0
-                    if abs(row['net_sum']) < 0.01:
-                        return 'Inter-bank'  # Clean transfer between accounts
-                    else:
-                        return 'Unique'  # Different accounts but not a clean transfer
-                else:
-                    # Same account, multiple transactions with same reference
-                    # This could be:
-                    # 1. Clean reversal (net ~= 0)
-                    # 2. Reversal with charges (small net amount, but large opposing amounts)
-                    
-                    if abs(row['net_sum']) < 0.01:
-                        return 'Reversed'  # Clean failed/reversed transaction
-                    else:
-                        # Check if this looks like a reversal with charges
-                        # Get the actual transactions to analyze the pattern
-                        ref_transactions = df[df['reference_number'] == row['reference_number']]
-                        amounts = ref_transactions['net_transaction'].values
-                        
-                        # Look for large opposing amounts (suggesting reversal)
-                        max_amount = max(amounts)
-                        min_amount = min(amounts)
-                        
-                        # If we have large opposing amounts (one positive, one negative)
-                        # and the net is small compared to the large amounts, it's likely a reversal with charges
-                        if (max_amount > 0 and min_amount < 0 and 
-                            abs(max_amount + min_amount) < max(abs(max_amount), abs(min_amount)) * 0.1):
-                            return 'Reversed'  # Reversal with charges/fees
-                        else:
-                            return 'Unique'  # Multiple transactions but not a reversal pattern
+            if len(amounts) <= 1:
+                return []
             
-            return 'Unique'
+            # For 2 transactions, check if they approximately cancel out
+            if len(amounts) == 2:
+                if abs(amounts[0] + amounts[1]) < 0.01:
+                    return [0, 1]
+                return []
+            
+            # For 3+ transactions, find the largest reversal group
+            # Try all possible combinations starting with the largest sets
+            from itertools import combinations
+            
+            # Try combinations of decreasing size (largest reversal group first)
+            for size in range(len(amounts), 1, -1):
+                for combo in combinations(indices, size):
+                    combo_sum = sum(amounts[i] for i in combo)
+                    if abs(combo_sum) < 0.01:  # Found a reversal group
+                        return list(combo)
+            
+            return []  # No reversal group found
         
-        df['transaction_classification'] = df.apply(classify_transaction, axis=1)
+        # Add helper columns to track reversal classification
+        df['temp_classification'] = 'Unique'
+        df['temp_reversal_group'] = False
+        
+        # Process each reference number separately
+        for ref_num in df['reference_number'].unique():
+            ref_transactions = df[df['reference_number'] == ref_num]
+            
+            if len(ref_transactions) == 1:
+                # Single transaction - always Unique
+                continue
+            elif ref_transactions['account_number'].nunique() > 1:
+                # Multiple accounts - check for inter-bank transfers
+                if abs(ref_transactions['net_transaction'].sum()) < 0.01:
+                    df.loc[df['reference_number'] == ref_num, 'temp_classification'] = 'Inter-bank'
+                # else remains 'Unique' (different accounts but not clean transfer)
+            else:
+                # Same account, multiple transactions
+                reversal_indices = find_reversal_groups(ref_transactions)
+                
+                if reversal_indices:
+                    # Mark reversal group transactions
+                    ref_indices = ref_transactions.index[reversal_indices]
+                    df.loc[ref_indices, 'temp_classification'] = 'Reversed'
+                    df.loc[ref_indices, 'temp_reversal_group'] = True
+                
+                # Remaining transactions stay as 'Unique' (like bank charges)
+        
+        # Apply the classification
+        df['transaction_classification'] = df['temp_classification']
+        
+        # Clean up temporary columns
+        df = df.drop(['temp_classification', 'temp_reversal_group'], axis=1)
         
         # Drop the helper columns
         df = df.drop(['net_sum', 'count', 'unique_accounts'], axis=1)
