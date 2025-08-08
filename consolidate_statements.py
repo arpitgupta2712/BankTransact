@@ -7,8 +7,11 @@ Combines multiple HDFC bank statement Excel files into a single CSV output
 import pandas as pd
 import os
 import re
+import shutil
+import argparse
 from datetime import datetime
 import numpy as np
+from pathlib import Path
 
 class HDFCStatementProcessor:
     
@@ -190,11 +193,12 @@ class HDFCStatementProcessor:
         # Add account name mapping (using string keys to match DataFrame data types)
         account_mapping = {
             '99909999099865': 'Infra',
-            '99919999099866': 'Sports',  # Fixed: has extra "1" in actual data 
+            '99919999099866': 'Sports',
             '99909999099867': 'B2B',
             '99909999099868': 'B2C',
             '99909999099869': 'Employees',
             '50200087543792': 'Primary',
+            '50200109619138': 'Shareholder'
         }
         
         df['account_name'] = df['account_number'].map(account_mapping).fillna('Unknown')
@@ -612,16 +616,92 @@ class HDFCStatementProcessor:
         lines.append("=" * 80)
         
         return lines
+    
+    def copy_to_desktop(self, output_files):
+        """Copy output files to a timestamped directory on the desktop"""
+        try:
+            # Get desktop path
+            desktop_path = Path.home() / "Desktop"
+            
+            # Create timestamped directory name
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            desktop_dir = desktop_path / f"statement_consolidated_{timestamp}"
+            
+            # Create the directory
+            desktop_dir.mkdir(parents=True, exist_ok=True)
+            
+            copied_files = []
+            for file_path in output_files:
+                if os.path.exists(file_path):
+                    file_name = os.path.basename(file_path)
+                    destination = desktop_dir / file_name
+                    shutil.copy2(file_path, destination)
+                    copied_files.append(str(destination))
+                    print(f"📋 Copied {file_name} to: {destination}")
+            
+            print(f"\n📁 All files copied to desktop directory: {desktop_dir}")
+            return str(desktop_dir), copied_files
+            
+        except Exception as e:
+            print(f"❌ Error copying files to desktop: {str(e)}")
+            return None, []
 
 def main():
-    statements_dir = "/Users/arpitgupta/Downloads/Apps/Finance/data/statements"
+    # Set up command line argument parsing
+    parser = argparse.ArgumentParser(description='HDFC Bank Statement Consolidator')
+    parser.add_argument(
+        '--statements-dir',
+        type=str,
+        default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'statements'),
+        help='Directory containing HDFC bank statement Excel files (default: ./data/statements)'
+    )
+    parser.add_argument(
+        '--no-desktop-copy',
+        action='store_true',
+        help='Skip copying files to desktop directory'
+    )
     
-    processor = HDFCStatementProcessor(statements_dir)
+    args = parser.parse_args()
+    
+    # Validate statements directory
+    if not os.path.exists(args.statements_dir):
+        print(f"❌ Error: Statements directory not found: {args.statements_dir}")
+        print("Please ensure the directory exists and contains Excel files.")
+        return
+    
+    # Check if directory has Excel files
+    excel_files = [f for f in os.listdir(args.statements_dir) 
+                  if f.endswith('.xls') or f.endswith('.xlsx')]
+    if not excel_files:
+        print(f"❌ Error: No Excel files found in: {args.statements_dir}")
+        print("Please ensure the directory contains HDFC bank statement Excel files.")
+        return
+    
+    print(f"📂 Using statements directory: {args.statements_dir}")
+    print(f"📊 Found {len(excel_files)} Excel files to process")
+    
+    # Process statements
+    processor = HDFCStatementProcessor(args.statements_dir)
     output_file = processor.create_consolidated_csv()
     
     if output_file:
         print(f"\n✅ Consolidation completed successfully!")
         print(f"📁 Output file: {output_file}")
+        
+        # Determine the summary file path
+        summary_file = os.path.join(os.path.dirname(args.statements_dir), 'consolidation_summary.txt')
+        
+        # Copy to desktop if not disabled
+        if not args.no_desktop_copy:
+            output_files = [output_file]
+            if os.path.exists(summary_file):
+                output_files.append(summary_file)
+            
+            desktop_dir, copied_files = processor.copy_to_desktop(output_files)
+            if desktop_dir and copied_files:
+                print(f"🎉 Files successfully copied to desktop: {desktop_dir}")
+    else:
+        print(f"❌ Consolidation failed!")
 
 if __name__ == "__main__":
     main()

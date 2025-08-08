@@ -27,6 +27,13 @@ A professional Python tool for consolidating and analyzing multiple HDFC bank st
 - **Text File Export**: Complete analysis saved as `consolidation_summary.txt`
 - **Clean CSV Output**: Structured data ready for further analysis
 - **Account Mapping**: Custom account names for better readability
+- **Desktop Integration**: Automatic copying of outputs to timestamped desktop directory
+
+### **Command Line Flexibility**
+- **Dynamic Path Support**: Specify any directory containing Excel statement files
+- **Flexible Output Options**: Control desktop copying and output locations
+- **Validation & Error Handling**: Built-in checks for directory existence and file formats
+- **Help Documentation**: Comprehensive command line help and usage examples
 
 ## 📊 Output Structure
 
@@ -93,20 +100,61 @@ Finance/
 ├── consolidate_statements.py     # Main processing script
 ├── requirements.txt             # Python dependencies
 ├── .gitignore                  # Security exclusions
-├── data/                       # Data directory
-│   ├── statements/            # Place Excel bank statements here
+├── data/                       # Default data directory
+│   ├── statements/            # Default location for Excel files
 │   │   └── .gitkeep          # (Excel files excluded from git)
 │   ├── consolidated_bank_statements.csv  # Output (excluded from git)
 │   └── consolidation_summary.txt        # Report (excluded from git)
 └── README.md                   # This documentation
+
+# Desktop Output (when enabled)
+~/Desktop/statement_consolidated_YYYYMMDD_HHMMSS/
+├── consolidated_bank_statements.csv     # Copy of main output
+└── consolidation_summary.txt           # Copy of detailed report
+```
+
+## 🎯 Command Line Options
+
+The consolidator supports flexible command line arguments for different use cases:
+
+```bash
+python consolidate_statements.py [OPTIONS]
+```
+
+### Available Options
+
+| Option | Description | Default |
+|--------|-------------|----------|
+| `--statements-dir PATH` | Directory containing Excel statement files | `./data/statements` |
+| `--no-desktop-copy` | Skip copying files to desktop directory | False (copies by default) |
+| `--help` | Show help message and exit | - |
+
+### Usage Examples
+
+```bash
+# Basic usage with default settings (copies to desktop)
+python consolidate_statements.py
+
+# Use custom directory with desktop copy
+python consolidate_statements.py --statements-dir /path/to/your/statements
+
+# Process files without desktop copy
+python consolidate_statements.py --no-desktop-copy
+
+# Custom directory without desktop copy
+python consolidate_statements.py --statements-dir ./my_statements --no-desktop-copy
+
+# Show all available options
+python consolidate_statements.py --help
 ```
 
 ## 🚀 Usage
 
 ### 1. **Prepare Your Data**
-Place your HDFC bank statement Excel files in the `data/statements/` directory:
+Place your HDFC bank statement Excel files in any directory:
 ```
 Expected format: Acct_Statement_XXXXXXXX####_DDMMYYYY.xls
+Default location: ./data/statements/
 ```
 
 ### 2. **Run the Consolidator**
@@ -114,19 +162,29 @@ Expected format: Acct_Statement_XXXXXXXX####_DDMMYYYY.xls
 # Activate virtual environment
 source finance_env/bin/activate
 
-# Run the consolidation
+# Basic usage (uses ./data/statements/, copies to desktop)
 python consolidate_statements.py
+
+# Or specify custom path
+python consolidate_statements.py --statements-dir /path/to/statements
 ```
 
 ### 3. **Review Results**
+
+**Local Output:**
 - **Console Output**: Real-time processing and comprehensive summary
-- **CSV File**: `data/consolidated_bank_statements.csv`
-- **Detailed Report**: `data/consolidation_summary.txt`
+- **CSV File**: `consolidated_bank_statements.csv` (in parent directory of statements)
+- **Detailed Report**: `consolidation_summary.txt` (in parent directory of statements)
+
+**Desktop Copy** (enabled by default):
+- **Timestamped Directory**: `~/Desktop/statement_consolidated_YYYYMMDD_HHMMSS/`
+- **Both Files Copied**: CSV and summary text files for easy access
+- **Organized Storage**: Each run creates a new timestamped directory
 
 ## 🔧 Configuration
 
 ### Account Mapping
-The tool includes predefined account mappings. To customize:
+The tool includes predefined account mappings. To customize, edit the `account_mapping` dictionary in the script:
 
 ```python
 account_mapping = {
@@ -136,14 +194,33 @@ account_mapping = {
     '99909999099868': 'B2C',
     '99909999099869': 'Employees',
     '50200087543792': 'Primary',
-    '50200109619138': 'Primary'
+    '50200109619138': 'Shareholder'
 }
 ```
 
 ### Processing Directory
-Update the `statements_dir` path in the script if needed:
-```python
-statements_dir = '/path/to/your/statements'
+You can specify any directory containing Excel statement files:
+
+```bash
+# Use default location (./data/statements/)
+python consolidate_statements.py
+
+# Use custom absolute path
+python consolidate_statements.py --statements-dir /Users/username/Downloads/bank_statements
+
+# Use relative path
+python consolidate_statements.py --statements-dir ./my_statements
+```
+
+### Desktop Output
+Control desktop copying behavior:
+
+```bash
+# Enable desktop copy (default)
+python consolidate_statements.py
+
+# Disable desktop copy
+python consolidate_statements.py --no-desktop-copy
 ```
 
 ## 🔐 Security Features
@@ -179,10 +256,13 @@ statements_dir = '/path/to/your/statements'
 ## 🛠 Troubleshooting
 
 ### Common Issues
+- **Directory Not Found**: Use `--statements-dir` to specify correct path to Excel files
+- **No Excel Files**: Ensure directory contains `.xls` or `.xlsx` HDFC statement files
 - **File Format Errors**: Ensure files are genuine HDFC Excel statements
 - **Date Parsing Issues**: Check for unusual date formats in source files
 - **Missing Balances**: Some statements may have incomplete balance information
 - **Account Mapping**: Unknown accounts will show as "Unknown" - update mapping as needed
+- **Desktop Copy Issues**: Check desktop permissions if copy fails
 
 ### Error Handling
 The tool includes comprehensive error handling and will:
