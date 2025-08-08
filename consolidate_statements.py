@@ -212,16 +212,46 @@ class HDFCStatementProcessor:
         
         # Determine transaction classification
         def classify_transaction(row):
-            # Check for duplicate references with net sum ~= 0
-            if (row['count'] > 1 and 
-                abs(row['net_sum']) < 0.01):  # Allow for small floating point errors
-                
-                if row['unique_accounts'] > 1:
-                    return 'Inter-bank'  # Transfer between different accounts
-                else:
-                    return 'Reversed'  # Failed/reversed transaction within same account
-            else:
+            # For single transactions, always classify as Unique
+            if row['count'] == 1:
                 return 'Unique'
+            
+            # For multiple transactions with same reference number
+            if row['count'] > 1:
+                # Check if transactions are across different accounts
+                if row['unique_accounts'] > 1:
+                    # Inter-account transfers should have net sum ~= 0
+                    if abs(row['net_sum']) < 0.01:
+                        return 'Inter-bank'  # Clean transfer between accounts
+                    else:
+                        return 'Unique'  # Different accounts but not a clean transfer
+                else:
+                    # Same account, multiple transactions with same reference
+                    # This could be:
+                    # 1. Clean reversal (net ~= 0)
+                    # 2. Reversal with charges (small net amount, but large opposing amounts)
+                    
+                    if abs(row['net_sum']) < 0.01:
+                        return 'Reversed'  # Clean failed/reversed transaction
+                    else:
+                        # Check if this looks like a reversal with charges
+                        # Get the actual transactions to analyze the pattern
+                        ref_transactions = df[df['reference_number'] == row['reference_number']]
+                        amounts = ref_transactions['net_transaction'].values
+                        
+                        # Look for large opposing amounts (suggesting reversal)
+                        max_amount = max(amounts)
+                        min_amount = min(amounts)
+                        
+                        # If we have large opposing amounts (one positive, one negative)
+                        # and the net is small compared to the large amounts, it's likely a reversal with charges
+                        if (max_amount > 0 and min_amount < 0 and 
+                            abs(max_amount + min_amount) < max(abs(max_amount), abs(min_amount)) * 0.1):
+                            return 'Reversed'  # Reversal with charges/fees
+                        else:
+                            return 'Unique'  # Multiple transactions but not a reversal pattern
+            
+            return 'Unique'
         
         df['transaction_classification'] = df.apply(classify_transaction, axis=1)
         
