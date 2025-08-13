@@ -192,13 +192,12 @@ class HDFCStatementProcessor:
         
         # Add account name mapping (using string keys to match DataFrame data types)
         account_mapping = {
+            '50200087543792': 'Primary',
             '99909999099865': 'Infra',
             '99919999099866': 'Sports',
             '99909999099867': 'B2B',
             '99909999099868': 'B2C',
-            '99909999099869': 'Employees',
-            '50200087543792': 'Primary',
-            '50200109619138': 'Shareholder'
+            '99909999099869': 'Employees'
         }
         
         df['account_name'] = df['account_number'].map(account_mapping).fillna('Unknown')
@@ -217,8 +216,9 @@ class HDFCStatementProcessor:
         # Helper function to find reversal groups within a set of transactions
         def find_reversal_groups(transactions):
             """
-            Find the largest subset of transactions that sum to approximately 0.
+            Efficiently find subsets of transactions that sum to approximately 0.
             Returns indices of transactions that form reversal groups.
+            Uses optimized approach to avoid exponential complexity.
             """
             amounts = transactions['net_transaction'].values
             indices = list(range(len(amounts)))
@@ -232,16 +232,57 @@ class HDFCStatementProcessor:
                     return [0, 1]
                 return []
             
-            # For 3+ transactions, find the largest reversal group
-            # Try all possible combinations starting with the largest sets
-            from itertools import combinations
+            # For larger sets, use efficient approach:
+            # 1. First try exact pairs and triplets (most common reversal patterns)
+            # 2. Then use subset sum approach for larger groups (limited search)
             
-            # Try combinations of decreasing size (largest reversal group first)
-            for size in range(len(amounts), 1, -1):
-                for combo in combinations(indices, size):
+            from itertools import combinations
+            tolerance = 0.01
+            
+            # Check pairs first (most common case)
+            for i in range(len(amounts)):
+                for j in range(i + 1, len(amounts)):
+                    if abs(amounts[i] + amounts[j]) < tolerance:
+                        return [i, j]
+            
+            # Check triplets (second most common)
+            if len(amounts) <= 10:  # Only for small sets to avoid performance issues
+                for combo in combinations(indices, 3):
                     combo_sum = sum(amounts[i] for i in combo)
-                    if abs(combo_sum) < 0.01:  # Found a reversal group
+                    if abs(combo_sum) < tolerance:
                         return list(combo)
+            
+            # For larger sets or if no simple patterns found, use heuristic approach
+            # Group by similar absolute values and check combinations within groups
+            if len(amounts) > 10:
+                # Create groups of transactions with similar absolute values
+                amount_groups = {}
+                for i, amount in enumerate(amounts):
+                    abs_amount = abs(amount)
+                    # Group by rounded absolute value (to nearest rupee)
+                    group_key = round(abs_amount)
+                    if group_key not in amount_groups:
+                        amount_groups[group_key] = []
+                    amount_groups[group_key].append((i, amount))
+                
+                # Check combinations within each group (much smaller search space)
+                for group in amount_groups.values():
+                    if len(group) >= 2:
+                        group_indices = [item[0] for item in group]
+                        group_amounts = [item[1] for item in group]
+                        
+                        # Check pairs within this group
+                        for i in range(len(group_amounts)):
+                            for j in range(i + 1, len(group_amounts)):
+                                if abs(group_amounts[i] + group_amounts[j]) < tolerance:
+                                    return [group_indices[i], group_indices[j]]
+                        
+                        # Check triplets within this group (if small enough)
+                        if len(group) <= 6:
+                            for combo in combinations(range(len(group)), 3):
+                                combo_sum = sum(group_amounts[k] for k in combo)
+                                if abs(combo_sum) < tolerance:
+                                    return [group_indices[k] for k in combo]
             
             return []  # No reversal group found
         
@@ -250,7 +291,14 @@ class HDFCStatementProcessor:
         df['temp_reversal_group'] = False
         
         # Process each reference number separately
-        for ref_num in df['reference_number'].unique():
+        unique_refs = df['reference_number'].unique()
+        total_refs = len(unique_refs)
+        print(f"🔄 Processing {total_refs} unique reference numbers for reversal detection...")
+        
+        for idx, ref_num in enumerate(unique_refs):
+            if idx % 100 == 0 and idx > 0:  # Progress indicator every 100 refs
+                print(f"   Processed {idx}/{total_refs} reference numbers ({idx/total_refs*100:.1f}%)")
+            
             ref_transactions = df[df['reference_number'] == ref_num]
             
             if len(ref_transactions) == 1:
