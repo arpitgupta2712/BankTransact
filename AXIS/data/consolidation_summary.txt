@@ -1,0 +1,55 @@
+================================================================================
+AXIS BANK STATEMENT CONSOLIDATION - COMPREHENSIVE SUMMARY
+================================================================================
+Generated on: 2025-08-19 23:56:16
+Output file: /Users/arpitgupta/Downloads/Apps/BankTransact/AXIS/data/consolidated_axis_statements.csv
+
+📁 PROCESSING SUMMARY
+----------------------------------------
+Files processed: 8
+Total transactions extracted: 11497
+
+📅 DATE RANGE ANALYSIS
+----------------------------------------
+Period: 2024-04-02 to 2025-08-19
+Duration: 504 days (16.6 months)
+
+🏦 ACCOUNT SUMMARY
+----------------------------------------
+Total unique accounts: 1
+  AXIS Primary (922030048910705): 11497 transactions
+
+💰 TRANSACTION TYPE BREAKDOWN
+----------------------------------------
+Total Income transactions: 3908 (₹192,182,641.45)
+Total Expense transactions: 7589 (₹190,064,729.23)
+External Income transactions: 3908 (₹192,182,641.45)
+External Expense transactions: 7589 (₹190,064,729.23)
+True business profit/loss: ₹2,117,912.22
+
+🔄 TRANSACTION CLASSIFICATION
+----------------------------------------
+Unique transactions: 11497 (external business transactions)
+Inter-bank transfers: 0 (transfers between accounts)
+Reversed transactions: 0 (failed/cancelled payments)
+
+📊 FINANCIAL SUMMARY BY ACCOUNT (External Transactions Only)
+----------------------------------------
+Account         | Txns  | Income (₹)      | Expenses (₹)    | Net (₹)        
+--------------------------------------------------------------------------------
+AXIS Primary    | 11497 | 192,182,641.45  | 190,064,729.23  | 2,117,912.22   
+--------------------------------------------------------------------------------
+TOTAL           | 11497 | 192,182,641.45  | 190,064,729.23  | 2,117,912.22   
+
+🎯 KEY INSIGHTS
+----------------------------------------
+Most active account: AXIS Primary (11497 transactions)
+Highest external income account: AXIS Primary (₹192,182,641.45)
+Highest external expense account: AXIS Primary (₹190,064,729.23)
+Total inter-bank transfer volume: ₹0.00
+Total reversed transaction volume: ₹0.00
+True business profit (external only): ₹2,117,912.22
+
+================================================================================
+END OF SUMMARY
+================================================================================
