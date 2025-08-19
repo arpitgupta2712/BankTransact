@@ -1,7 +1,7 @@
 ================================================================================
 AXIS BANK STATEMENT CONSOLIDATION - COMPREHENSIVE SUMMARY
 ================================================================================
-Generated on: 2025-08-20 00:05:49
+Generated on: 2025-08-20 00:23:16
 Output file: /Users/arpitgupta/Downloads/Apps/BankTransact/AXIS/data/consolidated_axis_statements.csv
 
 📁 PROCESSING SUMMARY
@@ -49,6 +49,27 @@ Highest external expense account: AXIS Primary (₹94,660,227.01)
 Total inter-bank transfer volume: ₹0.00
 Total reversed transaction volume: ₹0.00
 True business profit (external only): ₹684,413.20
+
+🔍 BALANCE INTEGRITY VERIFICATION
+----------------------------------------
+Verification Status: PASSED
+✅ Balance verification PASSED - No significant discrepancy
+
+Balance Details:
+  Opening Balance: ₹-9,787,387.07
+  Closing Balance: ₹-9,102,973.87
+  Calculated Balance: ₹-9,102,973.87
+  Difference: ₹-0.00 (0.0000%)
+
+Transaction Impact:
+  Total Income: ₹95,344,640.21
+  Total Expenses: ₹94,660,227.01
+  Net Impact: ₹684,413.20
+  Expected Change: ₹684,413.20
+
+Source Files Used:
+  📄 Opening balance from Account_Statement_Report_19-08-2025_2313hrs (2).CSV: ₹-9,787,387.07
+  📄 Closing balance from Account_Statement_Report_19-08-2025_2313hrs (1).CSV: ₹-9,102,973.87
 
 ================================================================================
 END OF SUMMARY

@@ -106,6 +106,8 @@ class AXISStatementProcessor:
             
         try:
             balance_str = str(balance_str).strip()
+            # Remove quotes if present
+            balance_str = balance_str.strip('"').strip("'")
             # Remove commas and handle negative format
             balance_str = balance_str.replace(',', '')
             # Handle AXIS format like "-,93,43,827.31"
@@ -518,8 +520,11 @@ class AXISStatementProcessor:
         output_path = os.path.join(os.path.dirname(self.statements_dir), output_file)
         df.to_csv(output_path, index=False)
         
+        # Perform balance verification
+        verification_results = self.verify_balance_integrity(df)
+        
         # Generate comprehensive summary
-        summary_lines = self.generate_comprehensive_summary(df, output_path)
+        summary_lines = self.generate_comprehensive_summary(df, output_path, verification_results)
         
         # Print to console
         for line in summary_lines:
@@ -538,7 +543,7 @@ class AXISStatementProcessor:
         
         return output_path
     
-    def generate_comprehensive_summary(self, df, output_path):
+    def generate_comprehensive_summary(self, df, output_path, verification_results=None):
         """Generate comprehensive summary for console and file output"""
         from datetime import datetime
         
@@ -680,12 +685,317 @@ class AXISStatementProcessor:
         else:
             lines.append("True business performance: Break-even")
         
+        # Add balance verification results if available
+        if verification_results:
+            lines.append("")
+            lines.append("🔍 BALANCE INTEGRITY VERIFICATION")
+            lines.append("-" * 40)
+            lines.append(f"Verification Status: {verification_results['verification_status']}")
+            
+            if verification_results['verification_status'] == 'PASSED':
+                lines.append("✅ Balance verification PASSED - No significant discrepancy")
+            else:
+                lines.append("❌ Balance verification FAILED - Significant discrepancy detected")
+            
+            lines.append("")
+            lines.append("Balance Details:")
+            if verification_results['opening_balance'] is not None:
+                lines.append(f"  Opening Balance: ₹{verification_results['opening_balance']:,.2f}")
+            else:
+                lines.append(f"  Opening Balance: Not available")
+            
+            if verification_results['closing_balance'] is not None:
+                lines.append(f"  Closing Balance: ₹{verification_results['closing_balance']:,.2f}")
+            else:
+                lines.append(f"  Closing Balance: Not available")
+            
+            if verification_results['calculated_balance'] is not None:
+                lines.append(f"  Calculated Balance: ₹{verification_results['calculated_balance']:,.2f}")
+            else:
+                lines.append(f"  Calculated Balance: Not available")
+            
+            if verification_results['difference'] is not None:
+                lines.append(f"  Difference: ₹{verification_results['difference']:,.2f} ({verification_results['difference_percentage']:.4f}%)")
+            else:
+                lines.append(f"  Difference: Not available")
+            lines.append("")
+            lines.append("Transaction Impact:")
+            lines.append(f"  Total Income: ₹{verification_results['total_income']:,.2f}")
+            lines.append(f"  Total Expenses: ₹{verification_results['total_expenses']:,.2f}")
+            lines.append(f"  Net Impact: ₹{verification_results['net_impact']:,.2f}")
+            if verification_results['expected_change'] is not None:
+                lines.append(f"  Expected Change: ₹{verification_results['expected_change']:,.2f}")
+            else:
+                lines.append(f"  Expected Change: Not available")
+            
+            if verification_results['issues']:
+                lines.append("")
+                lines.append("Issues Detected:")
+                for issue in verification_results['issues']:
+                    lines.append(f"  ⚠️ {issue}")
+            
+            lines.append("")
+            lines.append("Source Files Used:")
+            for info in verification_results['source_files_info']:
+                lines.append(f"  📄 {info}")
+        
         lines.append("")
         lines.append("=" * 80)
         lines.append("END OF SUMMARY")
         lines.append("=" * 80)
         
         return lines
+    
+    def verify_balance_integrity(self, df):
+        """Verify balance integrity by comparing calculated vs actual balances"""
+        print(f"\n🔍 BALANCE INTEGRITY VERIFICATION")
+        print(f"{'='*60}")
+        
+        # Get the prioritized files to find opening and closing balances
+        csv_files = [f for f in os.listdir(self.statements_dir) 
+                    if f.endswith('.CSV') or f.endswith('.csv')]
+        file_analysis = self.analyze_statement_files(csv_files)
+        prioritized_files = self.prioritize_files_by_coverage(file_analysis)
+        
+        # Find the earliest and latest dates in our consolidated data
+        earliest_date = df['date'].min()
+        latest_date = df['date'].max()
+        
+        print(f"Consolidated data period: {earliest_date} to {latest_date}")
+        
+        # Extract opening and closing balances from source statements
+        opening_balance = None
+        closing_balance = None
+        source_files_info = []
+        
+        # Find opening balance from the file that covers the earliest date
+        for file_info in prioritized_files:
+            file_path = file_info['file_path']
+            filename = file_info['filename']
+            start_date = file_info['start_date']
+            end_date = file_info['end_date']
+            
+            # Check if this file covers our earliest date (for opening balance)
+            if start_date and start_date <= earliest_date and end_date and end_date >= earliest_date:
+                file_opening = self.extract_opening_balance(file_path)
+                if file_opening is not None:
+                    opening_balance = file_opening
+                    source_files_info.append(f"Opening balance from {filename}: ₹{opening_balance:,.2f}")
+                    print(f"📊 Opening balance from {filename}: ₹{opening_balance:,.2f}")
+                    break
+        
+        # Find closing balance from the file that covers the latest date
+        for file_info in prioritized_files:
+            file_path = file_info['file_path']
+            filename = file_info['filename']
+            start_date = file_info['start_date']
+            end_date = file_info['end_date']
+            
+            # Check if this file covers our latest date (for closing balance)
+            if start_date and start_date <= latest_date and end_date and end_date >= latest_date:
+                file_closing = self.extract_closing_balance(file_path)
+                if file_closing is not None:
+                    closing_balance = file_closing
+                    source_files_info.append(f"Closing balance from {filename}: ₹{closing_balance:,.2f}")
+                    print(f"📊 Closing balance from {filename}: ₹{closing_balance:,.2f}")
+                    break
+        
+        if opening_balance is None or closing_balance is None:
+            print("⚠️  Could not extract opening or closing balance from source files")
+            return {
+                'verification_status': 'FAILED',
+                'error': 'Could not extract opening or closing balance',
+                'opening_balance': opening_balance,
+                'closing_balance': closing_balance,
+                'calculated_balance': None,
+                'difference': None,
+                'difference_percentage': 0,
+                'total_income': 0,
+                'total_expenses': 0,
+                'net_impact': 0,
+                'expected_change': 0,
+                'issues': ['Could not extract opening or closing balance'],
+                'source_files_info': source_files_info,
+                'balance_tracking': []
+            }
+        
+        # Calculate cumulative balance from our consolidated transactions
+        # Sort by date to ensure proper chronological order
+        df_sorted = df.sort_values('date')
+        
+        # Start with opening balance
+        cumulative_balance = opening_balance
+        balance_tracking = []
+        
+        print(f"\n📈 Balance Calculation:")
+        print(f"Starting balance: ₹{cumulative_balance:,.2f}")
+        
+        # Process each transaction chronologically
+        for _, transaction in df_sorted.iterrows():
+            if transaction['transaction_type'] == 'Income':
+                cumulative_balance += transaction['deposit_amount']
+            elif transaction['transaction_type'] == 'Expense':
+                cumulative_balance -= transaction['withdrawal_amount']
+            
+            # Track balance for verification
+            balance_tracking.append({
+                'date': transaction['date'],
+                'transaction_type': transaction['transaction_type'],
+                'amount': transaction['deposit_amount'] if transaction['transaction_type'] == 'Income' else transaction['withdrawal_amount'],
+                'running_balance': cumulative_balance
+            })
+        
+        print(f"Final calculated balance: ₹{cumulative_balance:,.2f}")
+        print(f"Expected closing balance: ₹{closing_balance:,.2f}")
+        
+        # Calculate difference
+        difference = cumulative_balance - closing_balance
+        difference_percentage = (abs(difference) / abs(closing_balance)) * 100 if closing_balance != 0 else 0
+        
+        print(f"Difference: ₹{difference:,.2f} ({difference_percentage:.4f}%)")
+        
+        # Determine verification status
+        if abs(difference) < 1.0:  # Allow for rounding differences up to ₹1
+            verification_status = 'PASSED'
+            print(f"✅ Balance verification PASSED - No significant discrepancy")
+        else:
+            verification_status = 'FAILED'
+            print(f"❌ Balance verification FAILED - Significant discrepancy detected")
+        
+        # Detailed analysis
+        print(f"\n📊 DETAILED ANALYSIS:")
+        
+        # Summary of transactions
+        total_income = df[df['transaction_type'] == 'Income']['deposit_amount'].sum()
+        total_expenses = df[df['transaction_type'] == 'Expense']['withdrawal_amount'].sum()
+        
+        print(f"Total income transactions: ₹{total_income:,.2f}")
+        print(f"Total expense transactions: ₹{total_expenses:,.2f}")
+        print(f"Net transaction impact: ₹{total_income - total_expenses:,.2f}")
+        print(f"Expected change: ₹{closing_balance - opening_balance:,.2f}")
+        
+        # Check for potential issues
+        issues = []
+        if abs(difference) > 1.0:
+            issues.append(f"Balance discrepancy of ₹{difference:,.2f}")
+        
+        if len(df) == 0:
+            issues.append("No transactions found in consolidated data")
+        
+        # Check for missing transactions by comparing with source files
+        source_transaction_counts = {}
+        for file_info in prioritized_files:
+            file_path = file_info['file_path']
+            filename = file_info['filename']
+            source_count = self.count_transactions_in_file(file_path)
+            source_transaction_counts[filename] = source_count
+        
+        print(f"\n📋 Source file transaction counts:")
+        for filename, count in source_transaction_counts.items():
+            print(f"  {filename}: {count} transactions")
+        
+        return {
+            'verification_status': verification_status,
+            'opening_balance': opening_balance,
+            'closing_balance': closing_balance,
+            'calculated_balance': cumulative_balance,
+            'difference': difference,
+            'difference_percentage': difference_percentage,
+            'total_income': total_income,
+            'total_expenses': total_expenses,
+            'net_impact': total_income - total_expenses,
+            'expected_change': closing_balance - opening_balance,
+            'issues': issues,
+            'source_files_info': source_files_info,
+            'balance_tracking': balance_tracking
+        }
+    
+    def extract_opening_balance(self, file_path):
+        """Extract opening balance from a statement file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            for line in lines:
+                if 'OPENING BALANCE' in line:
+                    fields = self.parse_csv_line(line)
+                    if len(fields) >= 7:
+                        balance_str = fields[6].strip()  # Balance is in field 7 (index 6)
+                        balance = self.clean_balance(balance_str)
+                        if balance is not None:
+                            print(f"    Found opening balance: {balance_str} -> ₹{balance:,.2f}")
+                            return balance
+                        else:
+                            print(f"    Could not parse opening balance: {balance_str}")
+            print(f"    No opening balance found in {os.path.basename(file_path)}")
+            return None
+        except Exception as e:
+            print(f"Error extracting opening balance from {file_path}: {str(e)}")
+            return None
+    
+    def extract_closing_balance(self, file_path):
+        """Extract closing balance from a statement file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            for line in lines:
+                if 'CLOSING BALANCE' in line:
+                    fields = self.parse_csv_line(line)
+                    if len(fields) >= 7:
+                        balance_str = fields[6].strip()  # Balance is in field 7 (index 6)
+                        balance = self.clean_balance(balance_str)
+                        if balance is not None:
+                            print(f"    Found closing balance: {balance_str} -> ₹{balance:,.2f}")
+                            return balance
+                        else:
+                            print(f"    Could not parse closing balance: {balance_str}")
+            print(f"    No closing balance found in {os.path.basename(file_path)}")
+            return None
+        except Exception as e:
+            print(f"Error extracting closing balance from {file_path}: {str(e)}")
+            return None
+    
+    def count_transactions_in_file(self, file_path):
+        """Count actual transactions in a source file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            # Find header row
+            header_row = None
+            for i, line in enumerate(lines):
+                if 'S.No' in line and 'Transaction Date' in line:
+                    header_row = i
+                    break
+            
+            if header_row is None:
+                return 0
+            
+            # Count transaction rows
+            transaction_count = 0
+            for i in range(header_row + 1, len(lines)):
+                line = lines[i].strip()
+                if not line:
+                    continue
+                
+                fields = self.parse_csv_line(line)
+                if len(fields) < 9:
+                    continue
+                
+                # Skip summary rows
+                if 'TRANSACTION TOTAL' in fields[3] or 'CLOSING BALANCE' in fields[3] or 'OPENING BALANCE' in fields[3]:
+                    continue
+                
+                # Check if this is a valid transaction row
+                date_str = fields[1].strip()
+                if date_str and len(date_str) >= 5:
+                    transaction_count += 1
+            
+            return transaction_count
+        except Exception as e:
+            print(f"Error counting transactions in {file_path}: {str(e)}")
+            return 0
     
     def copy_to_desktop(self, output_files):
         """Copy output files to a timestamped directory on the desktop"""
