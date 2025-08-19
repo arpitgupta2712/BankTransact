@@ -18,6 +18,7 @@ class AXISStatementProcessor:
     def __init__(self, statements_directory):
         self.statements_dir = statements_directory
         self.consolidated_data = []
+        self.data_dir = Path(statements_directory).parent
         
     def extract_account_info(self, file_path):
         """Extract account information from header rows"""
@@ -388,6 +389,9 @@ class AXISStatementProcessor:
         print("AXIS Bank Statement Consolidation")
         print(f"{'='*60}")
         
+        # Create organized output directories
+        self.create_output_directories()
+        
         # Process all files
         all_transactions = self.process_all_files()
         
@@ -516,12 +520,12 @@ class AXISStatementProcessor:
         final_columns = [col for col in column_order if col in df.columns]
         df = df[final_columns]
         
-        # Save to CSV
-        output_path = os.path.join(os.path.dirname(self.statements_dir), output_file)
+        # Save to CSV with clean naming
+        output_path = self.consolidated_dir / 'consolidated_axis_statements.csv'
         df.to_csv(output_path, index=False)
         
         # Create separate income and expense CSV files
-        self.create_separate_income_expense_files(df, os.path.dirname(self.statements_dir))
+        self.create_separate_income_expense_files(df)
         
         # Perform balance verification
         verification_results = self.verify_balance_integrity(df)
@@ -534,7 +538,7 @@ class AXISStatementProcessor:
             print(line)
         
         # Save summary to text file
-        summary_file = os.path.join(os.path.dirname(self.statements_dir), 'consolidation_summary.txt')
+        summary_file = self.summary_dir / 'consolidation_summary.txt'
         with open(summary_file, 'w') as f:
             f.write('\n'.join(summary_lines))
         
@@ -546,7 +550,7 @@ class AXISStatementProcessor:
         
         return output_path
     
-    def create_separate_income_expense_files(self, df, output_dir):
+    def create_separate_income_expense_files(self, df):
         """Create separate CSV files for income and expense transactions"""
         # Define the columns for the simplified files (removed cheque_number since it's in reference_number)
         simplified_columns = ['account_number', 'date', 'narration', 'amount', 'transaction_type', 'transaction_classification']
@@ -556,7 +560,7 @@ class AXISStatementProcessor:
         if len(income_df) > 0:
             # Add amount column (deposit amount for income)
             income_df['amount'] = income_df['deposit_amount']
-            income_file = os.path.join(output_dir, 'axis_income_transactions.csv')
+            income_file = self.income_dir / 'axis_income_transactions.csv'
             income_df[simplified_columns].to_csv(income_file, index=False)
             print(f"📈 Income transactions saved to: {income_file}")
         
@@ -565,7 +569,7 @@ class AXISStatementProcessor:
         if len(expense_df) > 0:
             # Add amount column (withdrawal amount for expenses)
             expense_df['amount'] = expense_df['withdrawal_amount']
-            expense_file = os.path.join(output_dir, 'axis_expense_transactions.csv')
+            expense_file = self.expense_dir / 'axis_expense_transactions.csv'
             expense_df[simplified_columns].to_csv(expense_file, index=False)
             print(f"📉 Expense transactions saved to: {expense_file}")
         
@@ -1054,6 +1058,29 @@ class AXISStatementProcessor:
             print(f"❌ Error copying files to desktop: {str(e)}")
             return None, []
 
+    def create_output_directories(self):
+        """Create organized output directory structure"""
+        # Create main output directories
+        self.consolidated_dir = self.data_dir / "consolidated"
+        self.income_dir = self.data_dir / "income"
+        self.income_party_dir = self.income_dir / "party"
+        self.expense_dir = self.data_dir / "expense"
+        self.summary_dir = self.data_dir / "summary"
+        
+        # Create directories
+        self.consolidated_dir.mkdir(exist_ok=True)
+        self.income_dir.mkdir(exist_ok=True)
+        self.income_party_dir.mkdir(exist_ok=True)
+        self.expense_dir.mkdir(exist_ok=True)
+        self.summary_dir.mkdir(exist_ok=True)
+        
+        print(f"📁 Created output directory structure:")
+        print(f"   📂 Consolidated: {self.consolidated_dir}")
+        print(f"   📂 Income: {self.income_dir}")
+        print(f"   📂 Income/Party: {self.income_party_dir}")
+        print(f"   📂 Expense: {self.expense_dir}")
+        print(f"   📂 Summary: {self.summary_dir}")
+
 def main():
     # Set up command line argument parsing
     parser = argparse.ArgumentParser(description='AXIS Bank Statement Consolidator')
@@ -1097,7 +1124,8 @@ def main():
         print(f"📁 Output file: {output_file}")
         
         # Determine the summary file path
-        summary_file = os.path.join(os.path.dirname(args.statements_dir), 'consolidation_summary.txt')
+        data_dir = os.path.dirname(args.statements_dir)
+        summary_file = os.path.join(data_dir, 'summary', 'consolidation_summary.txt')
         
         # Copy to desktop if not disabled
         if not args.no_desktop_copy:
@@ -1106,13 +1134,33 @@ def main():
                 output_files.append(summary_file)
             
             # Add income and expense files if they exist
-            income_file = os.path.join(os.path.dirname(args.statements_dir), 'axis_income_transactions.csv')
-            expense_file = os.path.join(os.path.dirname(args.statements_dir), 'axis_expense_transactions.csv')
+            income_file = os.path.join(data_dir, 'income', 'axis_income_transactions.csv')
+            expense_file = os.path.join(data_dir, 'expense', 'axis_expense_transactions.csv')
             
             if os.path.exists(income_file):
                 output_files.append(income_file)
             if os.path.exists(expense_file):
                 output_files.append(expense_file)
+            
+            # Add party analysis files if they exist
+            import glob
+            
+            # Add party analysis files with clean naming
+            party_summary_file = os.path.join(data_dir, "summary", "party_wise_income_summary.txt")
+            if os.path.exists(party_summary_file):
+                output_files.append(party_summary_file)
+            
+            party_list_file = os.path.join(data_dir, "summary", "party_list_summary.txt")
+            if os.path.exists(party_list_file):
+                output_files.append(party_list_file)
+            
+            party_csv_file = os.path.join(data_dir, "income", "party", "party_list_summary.csv")
+            if os.path.exists(party_csv_file):
+                output_files.append(party_csv_file)
+            
+            party_enhanced_file = os.path.join(data_dir, "income", "party", "axis_income_with_parties.csv")
+            if os.path.exists(party_enhanced_file):
+                output_files.append(party_enhanced_file)
             
             desktop_dir, copied_files = processor.copy_to_desktop(output_files)
             if desktop_dir and copied_files:
