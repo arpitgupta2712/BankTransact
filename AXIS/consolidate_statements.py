@@ -198,8 +198,8 @@ class AXISStatementProcessor:
                     transaction['deposit_amount'] = 0.0
                     transaction['transaction_type'] = 'Unknown'
                 
-                # Generate reference number from narration
-                transaction['reference_number'] = self.extract_reference_number(transaction['narration'])
+                # Use cheque number as reference number if available, otherwise null
+                transaction['reference_number'] = transaction['cheque_number'] if transaction['cheque_number'] else ''
                 
                 # Only add if we have a valid date
                 if transaction['date']:
@@ -504,12 +504,12 @@ class AXISStatementProcessor:
         # Drop the helper columns
         df = df.drop(['net_sum', 'count', 'unique_accounts'], axis=1)
         
-        # Reorder columns for better readability
+        # Clean up and reorder columns for better readability
         column_order = [
             'serial_no', 'account_name', 'account_number', 'date', 'value_date', 'narration', 
             'reference_number', 'transaction_type', 'transaction_classification', 
             'withdrawal_amount', 'deposit_amount', 'net_transaction', 'balance', 
-            'debit_credit', 'cheque_number', 'branch_name', 'source_file'
+            'debit_credit'
         ]
         
         # Only include columns that exist in the dataframe
@@ -519,6 +519,9 @@ class AXISStatementProcessor:
         # Save to CSV
         output_path = os.path.join(os.path.dirname(self.statements_dir), output_file)
         df.to_csv(output_path, index=False)
+        
+        # Create separate income and expense CSV files
+        self.create_separate_income_expense_files(df, os.path.dirname(self.statements_dir))
         
         # Perform balance verification
         verification_results = self.verify_balance_integrity(df)
@@ -542,6 +545,31 @@ class AXISStatementProcessor:
         print(df.head().to_string(index=False))
         
         return output_path
+    
+    def create_separate_income_expense_files(self, df, output_dir):
+        """Create separate CSV files for income and expense transactions"""
+        # Define the columns for the simplified files (removed cheque_number since it's in reference_number)
+        simplified_columns = ['account_number', 'date', 'narration', 'amount', 'transaction_type', 'transaction_classification']
+        
+        # Create income file
+        income_df = df[df['transaction_type'] == 'Income'].copy()
+        if len(income_df) > 0:
+            # Add amount column (deposit amount for income)
+            income_df['amount'] = income_df['deposit_amount']
+            income_file = os.path.join(output_dir, 'axis_income_transactions.csv')
+            income_df[simplified_columns].to_csv(income_file, index=False)
+            print(f"📈 Income transactions saved to: {income_file}")
+        
+        # Create expense file
+        expense_df = df[df['transaction_type'] == 'Expense'].copy()
+        if len(expense_df) > 0:
+            # Add amount column (withdrawal amount for expenses)
+            expense_df['amount'] = expense_df['withdrawal_amount']
+            expense_file = os.path.join(output_dir, 'axis_expense_transactions.csv')
+            expense_df[simplified_columns].to_csv(expense_file, index=False)
+            print(f"📉 Expense transactions saved to: {expense_file}")
+        
+        print(f"✅ Created separate income ({len(income_df)}) and expense ({len(expense_df)}) files")
     
     def generate_comprehensive_summary(self, df, output_path, verification_results=None):
         """Generate comprehensive summary for console and file output"""
@@ -1076,6 +1104,15 @@ def main():
             output_files = [output_file]
             if os.path.exists(summary_file):
                 output_files.append(summary_file)
+            
+            # Add income and expense files if they exist
+            income_file = os.path.join(os.path.dirname(args.statements_dir), 'axis_income_transactions.csv')
+            expense_file = os.path.join(os.path.dirname(args.statements_dir), 'axis_expense_transactions.csv')
+            
+            if os.path.exists(income_file):
+                output_files.append(income_file)
+            if os.path.exists(expense_file):
+                output_files.append(expense_file)
             
             desktop_dir, copied_files = processor.copy_to_desktop(output_files)
             if desktop_dir and copied_files:
