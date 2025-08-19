@@ -241,6 +241,95 @@ class AXISWorkflow:
         print(f"\n📂 All generated files are in: {self.data_dir}")
         print("🎉 Workflow completed successfully!")
     
+    def copy_all_files_to_desktop(self):
+        """Copy all generated files to desktop with organized directory structure"""
+        self.print_step(9, "Copying All Files to Desktop")
+        
+        import shutil
+        from datetime import datetime
+        
+        # Create desktop directory with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        desktop_dir = Path.home() / "Desktop" / f"axis_complete_workflow_{timestamp}"
+        
+        try:
+            # Remove old desktop directory if it exists
+            if desktop_dir.exists():
+                shutil.rmtree(desktop_dir)
+            
+            # Create new desktop directory structure
+            desktop_dir.mkdir(parents=True, exist_ok=True)
+            (desktop_dir / "consolidated").mkdir(exist_ok=True)
+            (desktop_dir / "income").mkdir(exist_ok=True)
+            (desktop_dir / "income" / "party").mkdir(exist_ok=True)
+            (desktop_dir / "expense").mkdir(exist_ok=True)
+            (desktop_dir / "summary").mkdir(exist_ok=True)
+            
+            files_copied = 0
+            
+            # Copy consolidated files
+            consolidated_file = self.data_dir / "consolidated" / "consolidated_axis_statements.csv"
+            if consolidated_file.exists():
+                shutil.copy2(consolidated_file, desktop_dir / "consolidated" / "consolidated_axis_statements.csv")
+                files_copied += 1
+                print(f"✅ Copied: consolidated/consolidated_axis_statements.csv")
+            
+            # Copy income files
+            income_file = self.data_dir / "income" / "axis_income_transactions.csv"
+            if income_file.exists():
+                shutil.copy2(income_file, desktop_dir / "income" / "axis_income_transactions.csv")
+                files_copied += 1
+                print(f"✅ Copied: income/axis_income_transactions.csv")
+            
+            # Copy income party files
+            party_enhanced_file = self.data_dir / "income" / "party" / "axis_income_with_parties.csv"
+            if party_enhanced_file.exists():
+                shutil.copy2(party_enhanced_file, desktop_dir / "income" / "party" / "axis_income_with_parties.csv")
+                files_copied += 1
+                print(f"✅ Copied: income/party/axis_income_with_parties.csv")
+            
+            party_csv_file = self.data_dir / "income" / "party" / "party_list_summary.csv"
+            if party_csv_file.exists():
+                shutil.copy2(party_csv_file, desktop_dir / "income" / "party" / "party_list_summary.csv")
+                files_copied += 1
+                print(f"✅ Copied: income/party/party_list_summary.csv")
+            
+            # Copy expense files
+            expense_file = self.data_dir / "expense" / "axis_expense_transactions.csv"
+            if expense_file.exists():
+                shutil.copy2(expense_file, desktop_dir / "expense" / "axis_expense_transactions.csv")
+                files_copied += 1
+                print(f"✅ Copied: expense/axis_expense_transactions.csv")
+            
+            # Copy summary files
+            consolidation_summary = self.data_dir / "summary" / "consolidation_summary.txt"
+            if consolidation_summary.exists():
+                shutil.copy2(consolidation_summary, desktop_dir / "summary" / "consolidation_summary.txt")
+                files_copied += 1
+                print(f"✅ Copied: summary/consolidation_summary.txt")
+            
+            party_summary_file = self.data_dir / "summary" / "party_wise_income_summary.txt"
+            if party_summary_file.exists():
+                shutil.copy2(party_summary_file, desktop_dir / "summary" / "party_wise_income_summary.txt")
+                files_copied += 1
+                print(f"✅ Copied: summary/party_wise_income_summary.txt")
+            
+            party_list_file = self.data_dir / "summary" / "party_list_summary.txt"
+            if party_list_file.exists():
+                shutil.copy2(party_list_file, desktop_dir / "summary" / "party_list_summary.txt")
+                files_copied += 1
+                print(f"✅ Copied: summary/party_list_summary.txt")
+            
+            print(f"\n🎉 Successfully copied {files_copied} files to desktop!")
+            print(f"📁 Desktop location: {desktop_dir}")
+            print(f"📂 Complete organized directory structure created!")
+            
+            return desktop_dir
+            
+        except Exception as e:
+            print(f"❌ Error copying files to desktop: {e}")
+            return None
+    
     def run_complete_workflow(self):
         """Run the complete workflow"""
         self.print_header("AXIS BANK COMPLETE WORKFLOW")
@@ -267,6 +356,9 @@ class AXISWorkflow:
                 print("Please check the error messages above and try again.")
                 return False
         
+        # Final desktop copy with all files
+        self.copy_all_files_to_desktop()
+        
         self.show_results()
         return True
 
@@ -277,16 +369,21 @@ def main():
     try:
         success = workflow.run_complete_workflow()
         if success:
-            print("\n🎉 All done! Press Enter to exit...")
+            print("\n🎉 All done! Workflow completed successfully.")
+            print("📁 Check your desktop for the organized output files.")
+            print("✅ Exiting gracefully...")
         else:
-            print("\n❌ Workflow failed. Press Enter to exit...")
-        input()
+            print("\n❌ Workflow failed. Please check the error messages above.")
+            print("❌ Exiting with error...")
+            exit(1)
     except KeyboardInterrupt:
         print("\n\n⏹️  Workflow interrupted by user")
+        print("⏹️  Exiting...")
+        exit(130)  # Standard exit code for SIGINT
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
-        print("Press Enter to exit...")
-        input()
+        print("❌ Exiting with error...")
+        exit(1)
 
 if __name__ == "__main__":
     main()

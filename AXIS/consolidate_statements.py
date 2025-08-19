@@ -1127,8 +1127,8 @@ def main():
         data_dir = os.path.dirname(args.statements_dir)
         summary_file = os.path.join(data_dir, 'summary', 'consolidation_summary.txt')
         
-        # Copy to desktop if not disabled
-        if not args.no_desktop_copy:
+        # Skip desktop copy here - will be done at end of workflow
+        if False:  # Disabled - desktop copy happens at end of complete workflow
             output_files = [output_file]
             if os.path.exists(summary_file):
                 output_files.append(summary_file)

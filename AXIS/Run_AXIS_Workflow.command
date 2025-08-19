@@ -25,7 +25,16 @@ fi
 echo "📋 Running complete workflow..."
 python3 run_complete_workflow.py
 
+# Check exit code and provide appropriate message
+exit_code=$?
 echo ""
-echo "🏁 Workflow completed!"
-echo "Press Enter to exit..."
-read
+if [ $exit_code -eq 0 ]; then
+    echo "🏁 Workflow completed successfully!"
+    echo "📁 Check your desktop for the organized output files."
+else
+    echo "❌ Workflow failed with exit code: $exit_code"
+    echo "Please check the error messages above."
+fi
+
+echo "✅ Terminal will close automatically in 3 seconds..."
+sleep 3
