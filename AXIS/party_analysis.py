@@ -139,6 +139,24 @@ class PartyAnalyzer:
         if re.search(toshniwal_pattern, narration):
             return "TOSHNIWAL TECHNOLOGIES PVT L"
         
+        # Pattern 15: NEFT with TORRENT PHARMACEUTICALS pattern
+        # Format: NEFT/.../TORRENT PHARMACEUTICALS LTD/HDFC BANK/...
+        torrent_pattern = r'NEFT/[^/]+/TORRENT PHARMACEUTICALS LTD/HDFC BANK/'
+        if re.search(torrent_pattern, narration):
+            return "TORRENT PHARMACEUTICALS LTD"
+        
+        # Pattern 16: NEFT with HONDA CARS INDIA pattern (concatenated format)
+        # Format: NEFT/.../HONDA CARS INDIA LTDHONDA CA/MUFG BANK/...
+        honda_pattern = r'HONDA CARS INDIA LTDHONDA CA'
+        if re.search(honda_pattern, narration):
+            return "HONDA CARS INDIA LTD"
+        
+        # Pattern 17: RTGS with HONDA CARS INDIA pattern (concatenated format)
+        # Format: RTGS/.../HONDA CARS INDIA LTDHO/MUFG BANK/...
+        honda_rtgs_pattern = r'HONDA CARS INDIA LTDHO'
+        if re.search(honda_rtgs_pattern, narration):
+            return "HONDA CARS INDIA LTD"
+        
         # Pattern 6: CLG (Clearing) transactions - these are usually bank names, not parties
         # Skip these as they're typically bank clearing transactions
         
@@ -155,14 +173,16 @@ class PartyAnalyzer:
             return False
             
         # Skip common bank names and non-party identifiers
+        # Note: LTD and LIMITED are legitimate business suffixes, not bank identifiers
         bank_keywords = [
-            'BANK', 'LIMITED', 'LTD', 'PVT', 'PRIVATE', 'CORPORATION', 'CORP',
+            'BANK', 'PVT', 'PRIVATE', 'CORPORATION', 'CORP',
             'HDFC', 'ICICI', 'SBI', 'STATE BANK', 'PUNJAB NATIONAL', 'CANARA',
             'UNION BANK', 'YES BANK', 'KOTAK', 'AXIS', 'STANDARD CHARTERED',
             'CITI', 'HSBC', 'IDFC', 'IDBI', 'BARODA', 'INDIA', 'INDIAN',
             'OVERSEAS', 'CENTRAL', 'UCO', 'PUNJAB AND SIND', 'RATNAKAR',
             'APIBANKI', 'RATNAKAR', 'NAINITAL', 'INDUSIND', 'JP MORGAN',
-            'MORGAN', 'CHASE', 'DEUTSCHE', 'BNP', 'PARIBAS', 'CREDIT SUISSE'
+            'MORGAN', 'CHASE', 'DEUTSCHE', 'BNP', 'PARIBAS', 'CREDIT SUISSE',
+            'MUFG BANK', 'MIZUHO BANK', 'BANK OF AMERICA', 'BANK OF INDIA'
         ]
         
         party_upper = party_name.upper()
