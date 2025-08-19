@@ -1,13 +1,13 @@
 ================================================================================
 AXIS BANK STATEMENT CONSOLIDATION - COMPREHENSIVE SUMMARY
 ================================================================================
-Generated on: 2025-08-19 23:56:16
+Generated on: 2025-08-20 00:05:49
 Output file: /Users/arpitgupta/Downloads/Apps/BankTransact/AXIS/data/consolidated_axis_statements.csv
 
 📁 PROCESSING SUMMARY
 ----------------------------------------
 Files processed: 8
-Total transactions extracted: 11497
+Total transactions extracted: 5618
 
 📅 DATE RANGE ANALYSIS
 ----------------------------------------
@@ -17,19 +17,19 @@ Duration: 504 days (16.6 months)
 🏦 ACCOUNT SUMMARY
 ----------------------------------------
 Total unique accounts: 1
-  AXIS Primary (922030048910705): 11497 transactions
+  AXIS Primary (922030048910705): 5618 transactions
 
 💰 TRANSACTION TYPE BREAKDOWN
 ----------------------------------------
-Total Income transactions: 3908 (₹192,182,641.45)
-Total Expense transactions: 7589 (₹190,064,729.23)
-External Income transactions: 3908 (₹192,182,641.45)
-External Expense transactions: 7589 (₹190,064,729.23)
-True business profit/loss: ₹2,117,912.22
+Total Income transactions: 1970 (₹95,344,640.21)
+Total Expense transactions: 3648 (₹94,660,227.01)
+External Income transactions: 1970 (₹95,344,640.21)
+External Expense transactions: 3648 (₹94,660,227.01)
+True business profit/loss: ₹684,413.20
 
 🔄 TRANSACTION CLASSIFICATION
 ----------------------------------------
-Unique transactions: 11497 (external business transactions)
+Unique transactions: 5618 (external business transactions)
 Inter-bank transfers: 0 (transfers between accounts)
 Reversed transactions: 0 (failed/cancelled payments)
 
@@ -37,18 +37,18 @@ Reversed transactions: 0 (failed/cancelled payments)
 ----------------------------------------
 Account         | Txns  | Income (₹)      | Expenses (₹)    | Net (₹)        
 --------------------------------------------------------------------------------
-AXIS Primary    | 11497 | 192,182,641.45  | 190,064,729.23  | 2,117,912.22   
+AXIS Primary    | 5618  | 95,344,640.21   | 94,660,227.01   | 684,413.20     
 --------------------------------------------------------------------------------
-TOTAL           | 11497 | 192,182,641.45  | 190,064,729.23  | 2,117,912.22   
+TOTAL           | 5618  | 95,344,640.21   | 94,660,227.01   | 684,413.20     
 
 🎯 KEY INSIGHTS
 ----------------------------------------
-Most active account: AXIS Primary (11497 transactions)
-Highest external income account: AXIS Primary (₹192,182,641.45)
-Highest external expense account: AXIS Primary (₹190,064,729.23)
+Most active account: AXIS Primary (5618 transactions)
+Highest external income account: AXIS Primary (₹95,344,640.21)
+Highest external expense account: AXIS Primary (₹94,660,227.01)
 Total inter-bank transfer volume: ₹0.00
 Total reversed transaction volume: ₹0.00
-True business profit (external only): ₹2,117,912.22
+True business profit (external only): ₹684,413.20
 
 ================================================================================
 END OF SUMMARY

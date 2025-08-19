@@ -253,19 +253,132 @@ class AXISStatementProcessor:
         return narration[:20] if len(narration) > 20 else narration
     
     def process_all_files(self):
-        """Process all CSV files in the statements directory"""
+        """Process all CSV files in the statements directory with intelligent deduplication"""
         csv_files = [f for f in os.listdir(self.statements_dir) 
                     if f.endswith('.CSV') or f.endswith('.csv')]
         
         print(f"Found {len(csv_files)} CSV files to process")
         
-        all_transactions = []
-        for file in csv_files:
-            file_path = os.path.join(self.statements_dir, file)
-            transactions = self.process_single_file(file_path)
-            all_transactions.extend(transactions)
+        # First, analyze all files to understand their periods and coverage
+        file_analysis = self.analyze_statement_files(csv_files)
+        
+        # Sort files by coverage priority (most comprehensive first)
+        prioritized_files = self.prioritize_files_by_coverage(file_analysis)
+        
+        print(f"\n📊 Statement Period Analysis:")
+        for file_info in prioritized_files:
+            print(f"  {file_info['filename']}: {file_info['start_date']} to {file_info['end_date']} ({file_info['duration_days']} days, {file_info['transaction_count']} transactions)")
+        
+        # Process files in priority order with deduplication
+        all_transactions = self.process_files_with_deduplication(prioritized_files)
         
         return all_transactions
+    
+    def analyze_statement_files(self, csv_files):
+        """Analyze all statement files to understand their periods and coverage"""
+        file_analysis = []
+        
+        for file in csv_files:
+            file_path = os.path.join(self.statements_dir, file)
+            try:
+                # Extract account info and period
+                account_info = self.extract_account_info(file_path)
+                
+                # Get a sample of transactions to estimate count
+                sample_transactions = self.process_single_file(file_path)
+                
+                # Parse dates
+                start_date = None
+                end_date = None
+                if account_info['statement_period']:
+                    # Extract dates from period string like "01/08/2025 to 03/08/2025"
+                    period_match = re.search(r'(\d{2}/\d{2}/\d{4})\s+to\s+(\d{2}/\d{2}/\d{4})', account_info['statement_period'])
+                    if period_match:
+                        start_date = self.clean_date(period_match.group(1))
+                        end_date = self.clean_date(period_match.group(2))
+                
+                # Calculate duration
+                duration_days = 0
+                if start_date and end_date:
+                    from datetime import datetime
+                    start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                    end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                    duration_days = (end_dt - start_dt).days + 1
+                
+                file_analysis.append({
+                    'filename': file,
+                    'file_path': file_path,
+                    'account_number': account_info['account_number'],
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'duration_days': duration_days,
+                    'transaction_count': len(sample_transactions),
+                    'account_info': account_info
+                })
+                
+            except Exception as e:
+                print(f"Error analyzing {file}: {str(e)}")
+                continue
+        
+        return file_analysis
+    
+    def prioritize_files_by_coverage(self, file_analysis):
+        """Prioritize files by coverage - most comprehensive first"""
+        # Sort by duration (longest first), then by transaction count (highest first)
+        prioritized = sorted(file_analysis, 
+                           key=lambda x: (x['duration_days'], x['transaction_count']), 
+                           reverse=True)
+        return prioritized
+    
+    def process_files_with_deduplication(self, prioritized_files):
+        """Process files in priority order with intelligent deduplication"""
+        all_transactions = []
+        processed_transaction_keys = set()  # Track unique transaction identifiers
+        
+        print(f"\n🔄 Processing files with deduplication:")
+        
+        for file_info in prioritized_files:
+            file_path = file_info['file_path']
+            filename = file_info['filename']
+            
+            print(f"\nProcessing: {filename}")
+            print(f"  Period: {file_info['start_date']} to {file_info['end_date']} ({file_info['duration_days']} days)")
+            
+            # Get all transactions from this file
+            file_transactions = self.process_single_file(file_path)
+            
+            # Filter out duplicate transactions
+            new_transactions = []
+            skipped_count = 0
+            
+            for transaction in file_transactions:
+                # Create a unique key for this transaction
+                transaction_key = self.create_transaction_key(transaction)
+                
+                if transaction_key not in processed_transaction_keys:
+                    new_transactions.append(transaction)
+                    processed_transaction_keys.add(transaction_key)
+                else:
+                    skipped_count += 1
+                    print(f"    Skipping duplicate transaction: {transaction['date']} - {transaction['narration'][:50]}...")
+            
+            print(f"  Added {len(new_transactions)} new transactions (skipped {skipped_count} duplicates)")
+            all_transactions.extend(new_transactions)
+        
+        print(f"\n✅ Total unique transactions after deduplication: {len(all_transactions)}")
+        return all_transactions
+    
+    def create_transaction_key(self, transaction):
+        """Create a unique key for a transaction to identify duplicates"""
+        # Combine multiple fields to create a unique identifier
+        key_parts = [
+            transaction['date'],
+            transaction['narration'][:100],  # First 100 chars of narration
+            str(transaction['amount']),
+            transaction['debit_credit'],
+            transaction['cheque_number'] if transaction['cheque_number'] else ''
+        ]
+        return '|'.join(key_parts)
     
     def create_consolidated_csv(self, output_file='consolidated_axis_statements.csv'):
         """Create consolidated CSV from all bank statements"""
