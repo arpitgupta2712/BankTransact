@@ -200,8 +200,9 @@ data/axis_expense_transactions.csv
 *.csv
 *.txt
 
-# But keep .gitkeep files
+# But keep important project files
 !.gitkeep
+!requirements.txt
 
 # Sensitive data
 config.py
