@@ -183,15 +183,25 @@ $RECYCLE.BIN/
 *.swo
 
 # Project specific - exclude sensitive financial data
-# Excel statement files (sensitive bank data)
+# Bank statement files (sensitive financial data)
 data/statements/*.xls
 data/statements/*.xlsx
+data/statements/*.CSV
+data/statements/*.csv
 
 # Output files (contain sensitive financial information)
 data/consolidated_bank_statements.csv
 data/consolidation_summary.txt
-data/*.csv
-data/*.txt
+data/consolidated_axis_statements.csv
+data/axis_income_transactions.csv
+data/axis_expense_transactions.csv
+
+# Exclude all CSV and TXT files from the entire app
+*.csv
+*.txt
+
+# But keep .gitkeep files
+!.gitkeep
 
 # Sensitive data
 config.py
