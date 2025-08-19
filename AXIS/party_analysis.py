@@ -157,6 +157,191 @@ class PartyAnalyzer:
         if re.search(honda_rtgs_pattern, narration):
             return "HONDA CARS INDIA LTD"
         
+        # Pattern 18: TRF (Transfer) transactions with company names
+        # Format: TRF/COMPANY_NAME/transfer or TRF/COMPANY_NAME/TRF
+        trf_pattern = r'TRF/([^/]+)/(transfer|TRF|trf|Transfer)'
+        match = re.search(trf_pattern, narration, re.IGNORECASE)
+        if match:
+            party_name = match.group(1).strip()
+            if self.is_valid_party_name(party_name):
+                return self.clean_party_name(party_name)
+        
+        # Pattern 19: INB/IFT (Internal Fund Transfer) transactions
+        # Format: INB/IFT/COMPANY_NAME/...
+        ift_internal_pattern = r'INB/IFT/([^/]+)/'
+        match = re.search(ift_internal_pattern, narration)
+        if match:
+            party_name = match.group(1).strip()
+            if self.is_valid_party_name(party_name):
+                return self.clean_party_name(party_name)
+        
+        # Pattern 20: NEFT with concatenated company names (MUFG Bank)
+        # Format: NEFT/.../COMPANY_NAMEPRIVATELIMITED/MUFG BANK/...
+        mufg_concatenated_pattern = r'NEFT/[^/]+/([A-Z\s]+)PRIVATELIMITED/MUFG BANK/'
+        match = re.search(mufg_concatenated_pattern, narration)
+        if match:
+            party_name = match.group(1).strip() + " PRIVATE LIMITED"
+            if self.is_valid_party_name(party_name):
+                return self.clean_party_name(party_name)
+        
+        # Pattern 21: MARUTI SUZUKI INDIA LIMITED
+        # Format: NEFT/.../MARUTI SUZUKI INDIA LIMITED/HDFC BANK/...
+        maruti_pattern = r'MARUTI SUZUKI INDIA LIMITED'
+        if re.search(maruti_pattern, narration):
+            return "MARUTI SUZUKI INDIA LIMITED"
+        
+        # Pattern 22: General NEFT pattern for companies ending with PRIVATE LIMITED
+        # Format: NEFT/.../COMPANY_NAME PRIVATE LIMITED/BANK/...
+        neft_private_limited_pattern = r'NEFT/[^/]+/([A-Z\s]+PRIVATE LIMITED)/[A-Z\s]+BANK/'
+        match = re.search(neft_private_limited_pattern, narration)
+        if match:
+            party_name = match.group(1).strip()
+            if self.is_valid_party_name(party_name):
+                return self.clean_party_name(party_name)
+        
+        # Pattern 23: HERO MOTOCORP LIMITED with "315" suffix
+        # Format: NEFT/.../HERO MOTOCORP LIMITED 315/HDFC BANK/...
+        hero_315_pattern = r'HERO MOTOCORP LIMITED 315'
+        if re.search(hero_315_pattern, narration):
+            return "HERO MOTOCORP LIMITED"
+        
+        # Pattern 24: VENUS INDUSTRIAL CORPORATION
+        # Format: NEFT/.../VENUS INDUSTRIAL CORPORATION/HDFC BANK/...
+        venus_pattern = r'VENUS INDUSTRIAL CORPORATION'
+        if re.search(venus_pattern, narration):
+            return "VENUS INDUSTRIAL CORPORATION"
+        
+        # Pattern 25: CLG (Clearing) transactions with party names
+        # Format: CLG/.../Bank Name /Party Name
+        clg_pattern = r'CLG/[^/]+/[^/]+/[^/]+\s+/([^/]+)'
+        match = re.search(clg_pattern, narration)
+        if match:
+            party_name = match.group(1).strip()
+            if self.is_valid_party_name(party_name):
+                return self.clean_party_name(party_name)
+        
+        # Pattern 26: BHARTI AUTOMATION PVT LTD with "A" suffix
+        # Format: NEFT/.../BHARTI AUTOMATION PVT LTD A//HDFC BANK/...
+        bharti_pattern = r'BHARTI AUTOMATION PVT LTD A'
+        if re.search(bharti_pattern, narration):
+            return "BHARTI AUTOMATION PVT LTD"
+        
+        # Pattern 27: TEMPSENSE INSTRUMENTATION PRIVATE LIMITED
+        # Format: INB/IFT/TEMPSENSE INSTRUMENTATION PRIVATE LIMITED
+        tempsense_pattern = r'TEMPSENSE INSTRUMENTATION PRIVATE LIMITED'
+        if re.search(tempsense_pattern, narration):
+            return "TEMPSENSE INSTRUMENTATION PRIVATE LIMITED"
+        
+        # Pattern 28: DIVYANIE
+        # Format: IMPS/P2A/.../DIVYANIE/BANKOFBA/...
+        divyanie_pattern = r'DIVYANIE/BANKOFBA'
+        if re.search(divyanie_pattern, narration):
+            return "DIVYANIE"
+        
+        # Pattern 29: FORENTEC
+        # Format: IMPS/P2A/.../FORENTEC/...
+        forentec_pattern = r'FORENTEC/[A-Z]+'
+        if re.search(forentec_pattern, narration):
+            return "FORENTEC"
+        
+        # Pattern 30: JOHARI DIGITAL (Simple format)
+        # Format: JOHARI DIGITAL /
+        johari_simple_pattern = r'JOHARI DIGITAL /'
+        if re.search(johari_simple_pattern, narration):
+            return "JOHARI DIGITAL"
+        
+        # Pattern 30b: JOHARI DIGITAL (IMPS format)
+        # Format: IMPS/P2A/.../JOHARI DIGITAL/...
+        johari_imps_pattern = r'JOHARI DIGITAL/[A-Z]+'
+        if re.search(johari_imps_pattern, narration):
+            return "JOHARI DIGITAL"
+        
+        # Pattern 31: MOON BEVERAGES
+        # Format: MOON BEVERAGES /
+        moon_pattern = r'MOON BEVERAGES /'
+        if re.search(moon_pattern, narration):
+            return "MOON BEVERAGES"
+        
+        # Pattern 32: MANKINDPHARMALIMITED (RTGS format)
+        # Format: RTGS/.../MANKINDPHARMALIMITEDR//HDFC BANK/
+        mankind_rtgs_pattern = r'MANKINDPHARMALIMITEDR'
+        if re.search(mankind_rtgs_pattern, narration):
+            return "MANKINDPHARMALIMITED"
+        
+        # Pattern 32b: MANKINDPHARMALIMITED (IMPS format)
+        # Format: IMPS/P2A/.../MANKINDPHARMALIMITED/...
+        mankind_imps_pattern = r'MANKINDPHARMALIMITED/[A-Z]+'
+        if re.search(mankind_imps_pattern, narration):
+            return "MANKINDPHARMALIMITED"
+        
+        # Pattern 33: Bank test charges (₹0-2 transactions)
+        # These are typically gateway test amounts from payment processors
+        # Note: This will be handled in the main analysis function based on amount
+        
+        # Pattern 34: VENUSPLA (IMPS format)
+        # Format: IMPS/P2A/.../VENUSPLA/YBP/...
+        venuspla_pattern = r'VENUSPLA/YBP'
+        if re.search(venuspla_pattern, narration):
+            return "VENUSPLA"
+        
+        # Pattern 35: CLG transactions with different format (lowercase clg)
+        # Format: Clg/.../Bank Name /.../Party Name
+        clg_lowercase_pattern = r'Clg/[^/]+/[^/]+/[^/]+/([^/,]+)'
+        match = re.search(clg_lowercase_pattern, narration)
+        if match:
+            party_name = match.group(1).strip()
+            if self.is_valid_party_name(party_name):
+                return self.clean_party_name(party_name)
+        
+        # Pattern 36: IMPS transactions with company names
+        # Format: IMPS/P2A/.../COMPANY_NAME/BANK/...
+        imps_company_patterns = [
+            r'TEXCAREI/ICICIBAN',
+            r'PRASHEET/Remitter',
+            r'ADVANCEC/ICICIBAN',
+            r'IMPRESSM/Remitter',
+            r'ATTRIIND/KOTAKMAH',
+            r'MANJEERA/ICICIBAN',
+            r'UNIDOSEX/KOTAKMAH',
+            r'SIGMATES/KOTAKMAH',
+            r'GAURAVVY/ICICIBAN',
+            r'KISHANEN/Punjaban',
+            r'CMSIMPSP/BANKOFBA',
+            r'VISHNU KU/State Ban',
+            r'PUSPENDRA/ICICI Ban',
+            r'ADCONINS/KOTAKMAH',
+            r'SANKA  AB/State Ban',
+            r'RELIABLE/KOTAKMAH'
+        ]
+        
+        for pattern in imps_company_patterns:
+            if re.search(pattern, narration):
+                company_name = pattern.split('/')[0]
+                return company_name
+        
+        # Pattern 37: NEFT transactions with company names
+        # Format: NEFT/.../COMPANY_NAME/BANK/...
+        neft_company_patterns = [
+            r'VAMANI OVERSEAS PVT LTD/ICICI BANK LIMITED',
+            r'TCPL PACKAGING LIMITED NEE TWENTY FIRST CENTU'
+        ]
+        
+        for pattern in neft_company_patterns:
+            if re.search(pattern, narration):
+                company_name = pattern.split('/')[0]
+                return company_name
+        
+        # Pattern 38: INB/IFT transactions with company names
+        # Format: INB/IFT/COMPANY_NAME
+        inb_company_patterns = [
+            r'SIMCO CALIBRATION & TESTING PRIVATE LIMIT',
+            r'PRECISE TESTING AND CALIBRATION CENTRE PV'
+        ]
+        
+        for pattern in inb_company_patterns:
+            if re.search(pattern, narration):
+                return pattern
+        
         # Pattern 6: CLG (Clearing) transactions - these are usually bank names, not parties
         # Skip these as they're typically bank clearing transactions
         
@@ -175,19 +360,34 @@ class PartyAnalyzer:
         # Skip common bank names and non-party identifiers
         # Note: LTD and LIMITED are legitimate business suffixes, not bank identifiers
         bank_keywords = [
-            'BANK', 'PVT', 'PRIVATE', 'CORPORATION', 'CORP',
+            'BANK', 'CORPORATION', 'CORP',
             'HDFC', 'ICICI', 'SBI', 'STATE BANK', 'PUNJAB NATIONAL', 'CANARA',
             'UNION BANK', 'YES BANK', 'KOTAK', 'AXIS', 'STANDARD CHARTERED',
-            'CITI', 'HSBC', 'IDFC', 'IDBI', 'BARODA', 'INDIA', 'INDIAN',
-            'OVERSEAS', 'CENTRAL', 'UCO', 'PUNJAB AND SIND', 'RATNAKAR',
-            'APIBANKI', 'RATNAKAR', 'NAINITAL', 'INDUSIND', 'JP MORGAN',
-            'MORGAN', 'CHASE', 'DEUTSCHE', 'BNP', 'PARIBAS', 'CREDIT SUISSE',
-            'MUFG BANK', 'MIZUHO BANK', 'BANK OF AMERICA', 'BANK OF INDIA'
+            'CITI', 'HSBC', 'IDFC', 'IDBI', 'BARODA', 'OVERSEAS', 'CENTRAL', 
+            'UCO', 'PUNJAB AND SIND', 'RATNAKAR', 'APIBANKI', 'NAINITAL', 
+            'INDUSIND', 'JP MORGAN', 'MORGAN', 'CHASE', 'DEUTSCHE', 'BNP', 
+            'PARIBAS', 'CREDIT SUISSE', 'MUFG BANK', 'MIZUHO BANK', 
+            'BANK OF AMERICA', 'BANK OF INDIA'
         ]
         
         party_upper = party_name.upper()
+        
+        # Special handling: Don't reject if it contains "INDIA" or "INDIAN" but also contains business words
+        business_indicators = ['PHARMACEUTICAL', 'INDUSTRIES', 'MOTORS', 'CARS', 'AUTOMATION', 
+                              'INSTRUMENTS', 'CONTROLS', 'ENGINEERING', 'TECHNOLOGIES', 'SYSTEMS',
+                              'SOLUTIONS', 'SERVICES', 'PRODUCTS', 'MANUFACTURING', 'CHEMICALS',
+                              'ELECTRONICS', 'MACHINERY', 'EQUIPMENT', 'TOOLS', 'MATERIALS']
+        
+        has_business_indicator = any(indicator in party_upper for indicator in business_indicators)
+        
         for keyword in bank_keywords:
             if keyword in party_upper:
+                # Allow "INDIA" or "INDIAN" if it has business indicators
+                if keyword in ['INDIA', 'INDIAN'] and has_business_indicator:
+                    continue
+                # Allow "PVT" or "PRIVATE" as they are legitimate business suffixes
+                if keyword in ['PVT', 'PRIVATE']:
+                    continue
                 return False
         
         # Skip if it's just numbers or special characters
@@ -238,8 +438,12 @@ class PartyAnalyzer:
             amount = row['amount']
             date = row['date']
             
-            # Extract party name
-            party_name = self.extract_party_name(narration)
+            # Check for bank test charges (₹0-2 transactions)
+            if 0 <= amount <= 2:
+                party_name = "BANK TEST CHARGE"
+            else:
+                # Extract party name
+                party_name = self.extract_party_name(narration)
             
             if party_name:
                 # Categorize by party
