@@ -104,8 +104,10 @@ class BankTransactViewModel: ObservableObject {
     
     // MARK: - File Management
     private func getBankDirectory(for bank: BankType) -> URL {
-        let currentDir = URL(fileURLWithPath: fileManager.currentDirectoryPath)
-        return currentDir.appendingPathComponent(bank.displayName)
+        // Use the actual project directory path
+        let projectPath = "/Users/arpitgupta/Downloads/Apps/BankTransact"
+        let projectDir = URL(fileURLWithPath: projectPath)
+        return projectDir.appendingPathComponent(bank.displayName)
     }
     
     private func copyFilesToBankDirectory() throws {
