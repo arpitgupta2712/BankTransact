@@ -181,7 +181,12 @@ struct ContentView: View {
             allowedContentTypes: [.commaSeparatedText],
             allowsMultipleSelection: true
         ) { result in
-            viewModel.handleFileSelection(result)
+            switch result {
+            case .success(let urls):
+                viewModel.addSelectedFiles(urls)
+            case .failure(let error):
+                Logger.logError("File selection failed: \(error.localizedDescription)")
+            }
         }
         .sheet(isPresented: $showingOutputViewer) {
             OutputViewer(outputFiles: viewModel.outputFiles)
