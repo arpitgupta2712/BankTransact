@@ -104,10 +104,10 @@ class BankTransactViewModel: ObservableObject {
     
     // MARK: - File Management
     private func getBankDirectory(for bank: BankType) -> URL {
-        // Use the actual project directory path
-        let projectPath = "/Users/arpitgupta/Downloads/Apps/BankTransact"
-        let projectDir = URL(fileURLWithPath: projectPath)
-        return projectDir.appendingPathComponent(bank.displayName)
+        // Use the current user's project directory path
+        let homeDirectory = fileManager.homeDirectoryForCurrentUser
+        let projectPath = homeDirectory.appendingPathComponent("Downloads/Apps/BankTransact")
+        return projectPath.appendingPathComponent(bank.displayName)
     }
     
     private func copyFilesToBankDirectory() throws {
@@ -121,8 +121,20 @@ class BankTransactViewModel: ObservableObject {
         let bankDir = getBankDirectory(for: selectedBank)
         let statementsDir = bankDir.appendingPathComponent("data/statements")
         
+        // Check if we can access the bank directory
+        guard fileManager.isWritableFile(atPath: bankDir.path) else {
+            Logger.logError("No write permission for bank directory: \(bankDir.path)")
+            throw BankTransactError.fileCopyFailed(error: "No write permission for bank directory. Please check folder permissions.")
+        }
+        
         // Create directory if it doesn't exist
-        try fileManager.createDirectory(at: statementsDir, withIntermediateDirectories: true)
+        do {
+            try fileManager.createDirectory(at: statementsDir, withIntermediateDirectories: true)
+            Logger.logProcess("Created directory: \(statementsDir.path)")
+        } catch {
+            Logger.logError("Failed to create directory: \(error.localizedDescription)")
+            throw BankTransactError.fileCopyFailed(error: "Failed to create statements directory: \(error.localizedDescription)")
+        }
         
         var copiedCount = 0
         for fileURL in selectedFiles {
@@ -132,13 +144,14 @@ class BankTransactViewModel: ObservableObject {
             do {
                 if fileManager.fileExists(atPath: destinationURL.path) {
                     try fileManager.removeItem(at: destinationURL)
+                    Logger.logProcess("Removed existing file: \(fileName)")
                 }
                 try fileManager.copyItem(at: fileURL, to: destinationURL)
                 copiedCount += 1
                 Logger.logProcess("Copied: \(fileName)")
             } catch {
                 Logger.logError("Failed to copy \(fileName): \(error.localizedDescription)")
-                throw BankTransactError.fileCopyFailed(error: error.localizedDescription)
+                throw BankTransactError.fileCopyFailed(error: "Failed to copy \(fileName): \(error.localizedDescription)")
             }
         }
         
