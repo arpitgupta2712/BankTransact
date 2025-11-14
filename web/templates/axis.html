@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXIS Bank Statement Consolidation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header a {
+            color: #f5576c;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        
+        .header a:hover {
+            text-decoration: underline;
+        }
+        
+        .upload-area {
+            border: 3px dashed #f5576c;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #fff5f7;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+        
+        .upload-area:hover {
+            background: #ffeef1;
+            border-color: #f093fb;
+        }
+        
+        .upload-area.dragover {
+            background: #ffe8ec;
+            border-color: #f093fb;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-list {
+            margin-top: 30px;
+        }
+        
+        .file-item {
+            background: #f5f7fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-name {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .file-size {
+            color: #999;
+            font-size: 0.9em;
+        }
+        
+        .remove-file {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .remove-file:hover {
+            background: #ff3838;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        
+        .button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.processing {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .download-section {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .download-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .download-button:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #f5576c;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 AXIS Bank Statement Consolidation</h1>
+            <a href="/">← Back to Home</a>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Drag & Drop your CSV files here</div>
+            <div class="upload-hint">or click to browse (.csv, .txt files)</div>
+            <input type="file" id="fileInput" multiple accept=".csv,.txt">
+        </div>
+        
+        <div class="file-list" id="fileList"></div>
+        
+        <button class="button" id="processButton" onclick="processFiles()" disabled>
+            Process Statements
+        </button>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="download-section" id="downloadSection"></div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const processButton = document.getElementById('processButton');
+        const status = document.getElementById('status');
+        const downloadSection = document.getElementById('downloadSection');
+        
+        let selectedFiles = [];
+        let sessionId = 'session_' + Date.now();
+        
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.name.match(/\.(csv|txt)$/i)) {
+                    selectedFiles.push(file);
+                }
+            }
+            updateFileList();
+        }
+        
+        function updateFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div>
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${(file.size / 1024).toFixed(2)} KB</div>
+                    </div>
+                    <button class="remove-file" onclick="removeFile(${index})">Remove</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+            
+            processButton.disabled = selectedFiles.length === 0;
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+        
+        async function processFiles() {
+            if (selectedFiles.length === 0) return;
+            
+            processButton.disabled = true;
+            showStatus('processing', 'Uploading files...');
+            downloadSection.style.display = 'none';
+            
+            try {
+                // Upload files
+                const formData = new FormData();
+                formData.append('session_id', sessionId);
+                selectedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+                
+                const uploadResponse = await fetch('/api/upload/axis', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const uploadData = await uploadResponse.json();
+                
+                if (!uploadResponse.ok) {
+                    throw new Error(uploadData.error || 'Upload failed');
+                }
+                
+                showStatus('processing', 'Processing statements...');
+                
+                // Process files
+                const processResponse = await fetch('/api/process/axis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+                
+                const processData = await processResponse.json();
+                
+                if (!processResponse.ok) {
+                    throw new Error(processData.error || 'Processing failed');
+                }
+                
+                showStatus('success', '✅ Statements processed successfully!');
+                showDownloadSection(processData);
+                
+            } catch (error) {
+                showStatus('error', '❌ Error: ' + error.message);
+            } finally {
+                processButton.disabled = false;
+            }
+        }
+        
+        function showStatus(type, message) {
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            status.innerHTML = type === 'processing' 
+                ? '<div class="spinner"></div>' + message
+                : message;
+        }
+        
+        function showDownloadSection(data) {
+            downloadSection.style.display = 'block';
+            downloadSection.innerHTML = '<h3>Download Files:</h3>';
+            
+            const csvLink = document.createElement('a');
+            csvLink.href = `/api/download/${data.output_file}`;
+            csvLink.className = 'download-button';
+            csvLink.textContent = '📊 Download Consolidated CSV';
+            csvLink.download = data.output_file;
+            downloadSection.appendChild(csvLink);
+            
+            if (data.summary_file) {
+                const summaryLink = document.createElement('a');
+                summaryLink.href = `/api/download/${data.summary_file}`;
+                summaryLink.className = 'download-button';
+                summaryLink.textContent = '📋 Download Summary Report';
+                summaryLink.download = data.summary_file;
+                downloadSection.appendChild(summaryLink);
+            }
+        }
+    </script>
+</body>
+</html>
+
