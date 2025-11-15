@@ -390,6 +390,47 @@
                 summaryLink.download = data.summary_file;
                 downloadSection.appendChild(summaryLink);
             }
+            
+            // Add party analysis files if available
+            if (data.party_files) {
+                downloadSection.innerHTML += '<h3 style="margin-top: 20px;">Vendor/Party Analysis:</h3>';
+                
+                if (data.party_files.party_list) {
+                    const partyListLink = document.createElement('a');
+                    partyListLink.href = `/api/download/${data.party_files.party_list}`;
+                    partyListLink.className = 'download-button';
+                    partyListLink.textContent = '🏢 Download Party List Summary';
+                    partyListLink.download = data.party_files.party_list;
+                    downloadSection.appendChild(partyListLink);
+                }
+                
+                if (data.party_files.party_list_csv) {
+                    const partyListCsvLink = document.createElement('a');
+                    partyListCsvLink.href = `/api/download/${data.party_files.party_list_csv}`;
+                    partyListCsvLink.className = 'download-button';
+                    partyListCsvLink.textContent = '📊 Download Party List CSV';
+                    partyListCsvLink.download = data.party_files.party_list_csv;
+                    downloadSection.appendChild(partyListCsvLink);
+                }
+                
+                if (data.party_files.party_summary) {
+                    const partySummaryLink = document.createElement('a');
+                    partySummaryLink.href = `/api/download/${data.party_files.party_summary}`;
+                    partySummaryLink.className = 'download-button';
+                    partySummaryLink.textContent = '📄 Download Detailed Party Analysis';
+                    partySummaryLink.download = data.party_files.party_summary;
+                    downloadSection.appendChild(partySummaryLink);
+                }
+                
+                if (data.party_files.enhanced_csv) {
+                    const enhancedCsvLink = document.createElement('a');
+                    enhancedCsvLink.href = `/api/download/${data.party_files.enhanced_csv}`;
+                    enhancedCsvLink.className = 'download-button';
+                    enhancedCsvLink.textContent = '📈 Download Income with Party Names';
+                    enhancedCsvLink.download = data.party_files.enhanced_csv;
+                    downloadSection.appendChild(enhancedCsvLink);
+                }
+            }
         }
     </script>
 </body>

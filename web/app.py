@@ -19,6 +19,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import consolidation processors
 from HDFC.consolidate_statements import HDFCStatementProcessor
 from AXIS.consolidate_statements import AXISStatementProcessor
+from AXIS.party_analysis import PartyAnalyzer
+from AXIS.create_party_summary import create_party_list
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
@@ -169,11 +171,67 @@ def process_statements(bank_type):
                 summary_output = app.config['OUTPUT_FOLDER'] / f'axis_summary_{session_id}.txt'
                 shutil.copy2(str(summary_file), str(summary_output))
             
+            # Run party analysis if income transactions exist
+            party_files = {}
+            income_file = processor.income_dir / 'axis_income_transactions.csv'
+            if income_file.exists():
+                try:
+                    print("\n🔍 Running party analysis...")
+                    
+                    # Run party analysis
+                    analyzer = PartyAnalyzer(str(income_file))
+                    analyzer.analyze_transactions()
+                    
+                    # Generate party summary
+                    party_summary_file = analyzer.generate_party_summary(
+                        str(processor.summary_dir / 'party_wise_income_summary.txt')
+                    )
+                    
+                    # Create enhanced CSV with party names
+                    enhanced_csv = analyzer.create_enhanced_csv(
+                        str(processor.income_party_dir / 'axis_income_with_parties.csv')
+                    )
+                    
+                    # Create party list summary
+                    # Temporarily change working directory for create_party_list
+                    original_cwd = os.getcwd()
+                    os.chdir(str(processor.data_dir.parent))
+                    party_list_txt, party_list_csv = create_party_list()
+                    os.chdir(original_cwd)
+                    
+                    # Copy party analysis files to output folder
+                    if party_summary_file and Path(party_summary_file).exists():
+                        party_summary_output = app.config['OUTPUT_FOLDER'] / f'axis_party_summary_{session_id}.txt'
+                        shutil.copy2(party_summary_file, str(party_summary_output))
+                        party_files['party_summary'] = f'axis_party_summary_{session_id}.txt'
+                    
+                    if party_list_txt and Path(party_list_txt).exists():
+                        party_list_output = app.config['OUTPUT_FOLDER'] / f'axis_party_list_{session_id}.txt'
+                        shutil.copy2(party_list_txt, str(party_list_output))
+                        party_files['party_list'] = f'axis_party_list_{session_id}.txt'
+                    
+                    if party_list_csv and Path(party_list_csv).exists():
+                        party_list_csv_output = app.config['OUTPUT_FOLDER'] / f'axis_party_list_{session_id}.csv'
+                        shutil.copy2(party_list_csv, str(party_list_csv_output))
+                        party_files['party_list_csv'] = f'axis_party_list_{session_id}.csv'
+                    
+                    if enhanced_csv and Path(enhanced_csv).exists():
+                        enhanced_csv_output = app.config['OUTPUT_FOLDER'] / f'axis_income_with_parties_{session_id}.csv'
+                        shutil.copy2(enhanced_csv, str(enhanced_csv_output))
+                        party_files['enhanced_csv'] = f'axis_income_with_parties_{session_id}.csv'
+                    
+                    print("✅ Party analysis completed successfully")
+                except Exception as e:
+                    print(f"⚠️ Party analysis failed: {e}")
+                    traceback.print_exc()
+                    # Continue even if party analysis fails
+            
             return jsonify({
                 'success': True,
                 'message': 'AXIS statements processed successfully',
                 'output_file': output_filename,
-                'summary_file': f'axis_summary_{session_id}.txt' if summary_output and summary_output.exists() else None
+                'summary_file': f'axis_summary_{session_id}.txt' if summary_output and summary_output.exists() else None,
+                'party_files': party_files if party_files else None
             })
     
     except Exception as e:
