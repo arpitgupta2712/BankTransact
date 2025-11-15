@@ -395,6 +395,26 @@
             if (data.party_files) {
                 downloadSection.innerHTML += '<h3 style="margin-top: 20px;">Vendor/Party Analysis:</h3>';
                 
+                // Add "Download All" button as the first option
+                const downloadAllLink = document.createElement('a');
+                downloadAllLink.href = `/api/download-party-reports/${sessionId}`;
+                downloadAllLink.className = 'download-button';
+                downloadAllLink.style.backgroundColor = '#10b981';
+                downloadAllLink.style.fontSize = '16px';
+                downloadAllLink.style.fontWeight = 'bold';
+                downloadAllLink.textContent = '📦 Download All Party Reports (ZIP)';
+                downloadAllLink.download = `axis_party_reports_${sessionId}.zip`;
+                downloadSection.appendChild(downloadAllLink);
+                
+                // Add a separator or note
+                const separator = document.createElement('div');
+                separator.style.margin = '15px 0';
+                separator.style.textAlign = 'center';
+                separator.style.color = '#6b7280';
+                separator.style.fontSize = '14px';
+                separator.textContent = '— or download individually —';
+                downloadSection.appendChild(separator);
+                
                 if (data.party_files.party_list) {
                     const partyListLink = document.createElement('a');
                     partyListLink.href = `/api/download/${data.party_files.party_list}`;

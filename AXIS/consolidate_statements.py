@@ -171,33 +171,41 @@ class AXISStatementProcessor:
                     continue
                 
                 # Clean the transaction data
+                # AXIS CSV format: Debit Amount and Credit Amount are in separate columns
+                debit_amount = self.clean_amount(fields[4])  # Debit Amount(INR)
+                credit_amount = self.clean_amount(fields[5])  # Credit Amount(INR)
+                
                 transaction = {
                     'account_number': account_info['account_number'],
                     'customer_name': account_info['customer_name'],
                     'date': self.clean_date(fields[1]),  # Transaction Date
                     'value_date': self.clean_date(fields[2]),  # Value Date
                     'narration': fields[3].strip() if len(fields) > 3 else '',  # Particulars
-                    'amount': self.clean_amount(fields[4]),  # Amount(INR)
-                    'debit_credit': fields[5].strip() if len(fields) > 5 else '',  # Debit/Credit
                     'balance': self.clean_balance(fields[6]),  # Balance(INR)
                     'cheque_number': fields[7].strip() if len(fields) > 7 else '',  # Cheque Number
                     'branch_name': fields[8].strip() if len(fields) > 8 else '',  # Branch Name
                     'source_file': os.path.basename(file_path)
                 }
                 
-                # Determine transaction type and amounts
-                if transaction['debit_credit'] == 'DR':
-                    transaction['withdrawal_amount'] = transaction['amount']
+                # Determine transaction type and amounts based on which column has a value
+                if debit_amount > 0:
+                    transaction['withdrawal_amount'] = debit_amount
                     transaction['deposit_amount'] = 0.0
                     transaction['transaction_type'] = 'Expense'
-                elif transaction['debit_credit'] == 'CR':
+                    transaction['debit_credit'] = 'DR'
+                    transaction['amount'] = debit_amount
+                elif credit_amount > 0:
                     transaction['withdrawal_amount'] = 0.0
-                    transaction['deposit_amount'] = transaction['amount']
+                    transaction['deposit_amount'] = credit_amount
                     transaction['transaction_type'] = 'Income'
+                    transaction['debit_credit'] = 'CR'
+                    transaction['amount'] = credit_amount
                 else:
                     transaction['withdrawal_amount'] = 0.0
                     transaction['deposit_amount'] = 0.0
                     transaction['transaction_type'] = 'Unknown'
+                    transaction['debit_credit'] = ''
+                    transaction['amount'] = 0.0
                 
                 # Use cheque number as reference number if available, otherwise null
                 transaction['reference_number'] = transaction['cheque_number'] if transaction['cheque_number'] else ''

@@ -12,6 +12,8 @@ from pathlib import Path
 from flask import Flask, request, jsonify, send_file, render_template
 from werkzeug.utils import secure_filename
 import traceback
+import zipfile
+from io import BytesIO
 
 # Add parent directory to path to import consolidation modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -255,6 +257,49 @@ def download_file(filename):
         as_attachment=True,
         download_name=filename
     )
+
+@app.route('/api/download-party-reports/<session_id>')
+def download_party_reports(session_id):
+    """Download all party analysis reports as a ZIP file"""
+    try:
+        # Create a BytesIO object to store the ZIP file in memory
+        memory_file = BytesIO()
+        
+        # Create ZIP file
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # List of possible party report files
+            party_files = [
+                (f'axis_party_list_{session_id}.txt', 'Party_List_Summary.txt'),
+                (f'axis_party_list_{session_id}.csv', 'Party_List_Summary.csv'),
+                (f'axis_party_summary_{session_id}.txt', 'Detailed_Party_Analysis.txt'),
+                (f'axis_income_with_parties_{session_id}.csv', 'Income_With_Party_Names.csv')
+            ]
+            
+            files_added = 0
+            for filename, archive_name in party_files:
+                file_path = app.config['OUTPUT_FOLDER'] / filename
+                if file_path.exists():
+                    zipf.write(file_path, archive_name)
+                    files_added += 1
+            
+            if files_added == 0:
+                return jsonify({'error': 'No party reports found'}), 404
+        
+        # Seek to the beginning of the BytesIO object
+        memory_file.seek(0)
+        
+        # Send the ZIP file
+        return send_file(
+            memory_file,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'axis_party_reports_{session_id}.zip'
+        )
+    
+    except Exception as e:
+        print(f"Error creating ZIP file: {e}")
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to create ZIP file: {str(e)}'}), 500
 
 @app.route('/api/cleanup/<session_id>', methods=['POST'])
 def cleanup_session(session_id):
