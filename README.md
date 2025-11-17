@@ -40,6 +40,22 @@ From the project root:
 
 Then open `http://localhost:5001` in your browser.
 
+### Restart the Server
+
+**Quick restart:**
+```bash
+# Stop: Press Ctrl+C in terminal, or:
+pkill -f "python.*app.py"
+
+# Start: From project root
+./start.sh
+```
+
+**Check if server is running:**
+```bash
+lsof -ti:5001  # Returns process ID if running
+```
+
 ### Usage Steps
 
 1. **Choose Bank Type**
@@ -194,16 +210,20 @@ python3 run_complete_workflow.py
 
 ## ⚠️ Troubleshooting
 
-### Port Already in Use
-App automatically finds free port starting from 5001.
+### Server Won't Start
+- **Port in use**: App automatically finds free port (5001, 5002, etc.)
+- **Kill existing server**: `pkill -f "python.*app.py"`
+- **Check Python**: `python3 --version` (needs 3.9+)
 
 ### Import Errors
-Run `./start.sh` from project root - it handles all setup automatically.
+- Run `./start.sh` from project root - it handles all setup automatically
+- Make sure you're in the project root directory
 
 ### File Upload Issues
 - Max file size: 100MB
 - File extensions: .xls/.xlsx for HDFC, .csv/.txt for AXIS
 - Check browser console (F12) for errors
+- Check terminal output for Python errors
 
 ## 🚀 Development
 
@@ -219,6 +239,26 @@ Run `./start.sh` from project root - it handles all setup automatically.
 - **Web Server**: `web/app.py` - Flask API endpoints
 - **Frontend**: `web/templates/` - HTML/CSS/JavaScript
 - **Configuration**: JSON files in bank directories
+
+## 🌐 Deployment
+
+Your app is deployed to Heroku! 🎉
+
+**Live URL**: https://banktransact-app-cbab695bed67.herokuapp.com/
+
+**Deployment Commands:**
+```bash
+# View logs
+heroku logs --tail --app banktransact-app
+
+# Restart app
+heroku restart --app banktransact-app
+
+# Open app
+heroku open --app banktransact-app
+```
+
+For detailed deployment information, see `DEPLOYMENT.md`.
 
 ---
 
