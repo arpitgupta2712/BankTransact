@@ -12,12 +12,53 @@ import argparse
 from datetime import datetime
 import numpy as np
 from pathlib import Path
+import json
 
 class HDFCStatementProcessor:
     
-    def __init__(self, statements_directory):
+    def __init__(self, statements_directory, config_file=None):
         self.statements_dir = statements_directory
         self.consolidated_data = []
+        self.config_file = config_file or self._get_default_config_path()
+        self.account_mapping = self._load_account_config()
+    
+    def _get_default_config_path(self):
+        """Get the default path to the account config file"""
+        # Try to find config file relative to this script
+        script_dir = Path(__file__).parent
+        config_path = script_dir / 'account_config.json'
+        return str(config_path)
+    
+    def _load_account_config(self):
+        """Load account mapping from config file"""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r') as f:
+                    config = json.load(f)
+                    return config.get('account_mapping', {})
+            else:
+                # Return default mapping if config file doesn't exist
+                print(f"⚠️  Config file not found at {self.config_file}, using default mapping")
+                return {
+                    '50200087543792': 'Primary',
+                    '99909999099865': 'Infra',
+                    '99919999099866': 'Sports',
+                    '99909999099867': 'B2B',
+                    '99909999099868': 'B2C',
+                    '99909999099869': 'Employees',
+                    '50200109619138': 'Primary'
+                }
+        except Exception as e:
+            print(f"⚠️  Error loading config file: {e}, using default mapping")
+            return {
+                '50200087543792': 'Primary',
+                '99909999099865': 'Infra',
+                '99919999099866': 'Sports',
+                '99909999099867': 'B2B',
+                '99909999099868': 'B2C',
+                '99909999099869': 'Employees',
+                '50200109619138': 'Primary'
+            }
         
     def extract_account_info(self, df):
         """Extract account information from header rows"""
@@ -190,17 +231,8 @@ class HDFCStatementProcessor:
         # Add net transaction column (deposit - withdrawal)
         df['net_transaction'] = df['deposit_amount'] - df['withdrawal_amount']
         
-        # Add account name mapping (using string keys to match DataFrame data types)
-        account_mapping = {
-            '50200087543792': 'Primary',
-            '99909999099865': 'Infra',
-            '99919999099866': 'Sports',
-            '99909999099867': 'B2B',
-            '99909999099868': 'B2C',
-            '99909999099869': 'Employees'
-        }
-        
-        df['account_name'] = df['account_number'].map(account_mapping).fillna('Unknown')
+        # Add account name mapping from config file
+        df['account_name'] = df['account_number'].map(self.account_mapping).fillna('Unknown')
         
         # Detect inter-bank transactions vs unique transactions
         # Group by reference_number and calculate stats
@@ -369,24 +401,13 @@ class HDFCStatementProcessor:
         excel_files = [f for f in os.listdir(self.statements_dir) 
                       if f.endswith('.xls') or f.endswith('.xlsx')]
         
-        # Account mapping
-        account_mapping = {
-            '99909999099865': 'Infra',
-            '99919999099866': 'Sports',
-            '99909999099867': 'B2B',
-            '99909999099868': 'B2C',
-            '99909999099869': 'Employees',
-            '50200087543792': 'Primary',
-            '50200109619138': 'Primary'
-        }
-        
         # Extract summary for each file
         for file in excel_files:
             file_path = os.path.join(self.statements_dir, file)
             summary = self.extract_statement_summary(file_path)
             
             if summary['account_number']:
-                account_name = account_mapping.get(str(summary['account_number']), 'Unknown')
+                account_name = self.account_mapping.get(str(summary['account_number']), 'Unknown')
                 
                 if account_name != 'Unknown':
                     real_change = summary['closing_balance'] - summary['opening_balance']

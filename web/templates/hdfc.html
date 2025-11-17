@@ -214,6 +214,123 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .config-section {
+            background: #f8f9ff;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .config-header h2 {
+            color: #333;
+            font-size: 1.3em;
+            margin: 0;
+        }
+        
+        .config-toggle {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .config-toggle:hover {
+            background: #764ba2;
+        }
+        
+        .config-content {
+            display: none;
+        }
+        
+        .config-content.active {
+            display: block;
+        }
+        
+        .account-mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .account-mapping-table th,
+        .account-mapping-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .account-mapping-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .account-mapping-table tr:hover {
+            background: #f0f2ff;
+        }
+        
+        .account-mapping-table input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+        
+        .add-account-row {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .add-account-row input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .remove-account {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .remove-account:hover {
+            background: #ff3838;
+        }
+        
+        .save-config-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        
+        .save-config-button:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -221,6 +338,37 @@
         <div class="header">
             <h1>🏛️ HDFC Bank Statement Consolidation</h1>
             <a href="/">← Back to Home</a>
+        </div>
+        
+        <div class="config-section">
+            <div class="config-header">
+                <h2>⚙️ Account Mapping Configuration</h2>
+                <button class="config-toggle" onclick="toggleConfig()">Show/Hide</button>
+            </div>
+            <div class="config-content" id="configContent">
+                <p style="color: #666; margin-bottom: 15px;">
+                    Configure account number to account name mapping. This allows you to customize account names for different clients.
+                </p>
+                <table class="account-mapping-table">
+                    <thead>
+                        <tr>
+                            <th>Account Number</th>
+                            <th>Account Name</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accountMappingTable">
+                        <!-- Account mappings will be loaded here -->
+                    </tbody>
+                </table>
+                <div class="add-account-row">
+                    <input type="text" id="newAccountNumber" placeholder="Enter account number">
+                    <input type="text" id="newAccountName" placeholder="Enter account name">
+                    <button class="button" onclick="addAccountMapping()" style="width: auto; margin: 0; padding: 10px 20px;">Add Account</button>
+                </div>
+                <button class="save-config-button" onclick="saveAccountMapping()">💾 Save Configuration</button>
+                <div id="configStatus" style="margin-top: 10px;"></div>
+            </div>
         </div>
         
         <div class="upload-area" id="uploadArea">
@@ -251,6 +399,129 @@
         
         let selectedFiles = [];
         let sessionId = 'session_' + Date.now();
+        let accountMapping = {};
+        
+        // Load account mapping on page load
+        loadAccountMapping();
+        
+        function toggleConfig() {
+            const configContent = document.getElementById('configContent');
+            configContent.classList.toggle('active');
+        }
+        
+        async function loadAccountMapping() {
+            try {
+                const response = await fetch('/api/config/hdfc/account-mapping');
+                const data = await response.json();
+                
+                if (data.success) {
+                    accountMapping = data.account_mapping || {};
+                    renderAccountMapping();
+                }
+            } catch (error) {
+                console.error('Error loading account mapping:', error);
+            }
+        }
+        
+        function renderAccountMapping() {
+            const tableBody = document.getElementById('accountMappingTable');
+            tableBody.innerHTML = '';
+            
+            for (const [accountNumber, accountName] of Object.entries(accountMapping)) {
+                const row = document.createElement('tr');
+                row.setAttribute('data-account', accountNumber);
+                row.innerHTML = `
+                    <td><input type="text" value="${accountNumber.replace(/"/g, '&quot;')}" data-original="${accountNumber.replace(/"/g, '&quot;')}" onchange="updateAccountNumber(this)"></td>
+                    <td><input type="text" value="${accountName.replace(/"/g, '&quot;')}" data-account="${accountNumber.replace(/"/g, '&quot;')}"></td>
+                    <td><button class="remove-account" onclick="removeAccountMappingRow(this)">Remove</button></td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+        
+        function removeAccountMappingRow(button) {
+            const row = button.closest('tr');
+            const accountNumber = row.querySelector('td:first-child input').value.trim();
+            delete accountMapping[accountNumber];
+            renderAccountMapping();
+        }
+        
+        function updateAccountNumber(input) {
+            const originalNumber = input.getAttribute('data-original');
+            const newNumber = input.value;
+            const accountNameInput = input.parentElement.nextElementSibling.querySelector('input');
+            const accountName = accountNameInput.value;
+            
+            if (originalNumber !== newNumber) {
+                // Remove old entry
+                delete accountMapping[originalNumber];
+                // Add new entry
+                accountMapping[newNumber] = accountName;
+                // Update data attributes
+                input.setAttribute('data-original', newNumber);
+                accountNameInput.setAttribute('data-account', newNumber);
+            }
+        }
+        
+        function addAccountMapping() {
+            const accountNumber = document.getElementById('newAccountNumber').value.trim();
+            const accountName = document.getElementById('newAccountName').value.trim();
+            
+            if (!accountNumber || !accountName) {
+                alert('Please enter both account number and account name');
+                return;
+            }
+            
+            accountMapping[accountNumber] = accountName;
+            renderAccountMapping();
+            
+            // Clear input fields
+            document.getElementById('newAccountNumber').value = '';
+            document.getElementById('newAccountName').value = '';
+        }
+        
+        
+        async function saveAccountMapping() {
+            const statusDiv = document.getElementById('configStatus');
+            statusDiv.innerHTML = '<div class="spinner"></div>Saving...';
+            statusDiv.className = 'status processing';
+            statusDiv.style.display = 'block';
+            
+            try {
+                // Update account mapping from input fields
+                const rows = document.querySelectorAll('#accountMappingTable tr');
+                accountMapping = {};
+                rows.forEach(row => {
+                    const accountNumber = row.querySelector('td:first-child input').value.trim();
+                    const accountName = row.querySelector('td:nth-child(2) input').value.trim();
+                    if (accountNumber && accountName) {
+                        accountMapping[accountNumber] = accountName;
+                    }
+                });
+                
+                const response = await fetch('/api/config/hdfc/account-mapping', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        account_mapping: accountMapping
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    statusDiv.innerHTML = '✅ Configuration saved successfully!';
+                    statusDiv.className = 'status success';
+                } else {
+                    throw new Error(data.error || 'Failed to save configuration');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Error: ' + error.message;
+                statusDiv.className = 'status error';
+            }
+        }
         
         // Upload area click
         uploadArea.addEventListener('click', () => fileInput.click());

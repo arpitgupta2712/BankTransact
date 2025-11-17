@@ -184,19 +184,34 @@ python consolidate_statements.py --statements-dir /path/to/statements
 ## 🔧 Configuration
 
 ### Account Mapping
-The tool includes predefined account mappings. To customize, edit the `account_mapping` dictionary in the script:
+The tool uses a configuration file (`account_config.json`) for account number to account name mapping. This allows you to easily customize account names for different clients without modifying the code.
 
-```python
-account_mapping = {
-    '99909999099865': 'Infra',
-    '99919999099866': 'Sports', 
-    '99909999099867': 'B2B',
-    '99909999099868': 'B2C',
-    '99909999099869': 'Employees',
-    '50200087543792': 'Primary',
-    '50200109619138': 'Shareholder'
+**Configuration File Location**: `HDFC/account_config.json`
+
+**Format**:
+```json
+{
+  "account_mapping": {
+    "50200087543792": "Primary",
+    "99909999099865": "Infra",
+    "99919999099866": "Sports",
+    "99909999099867": "B2B",
+    "99909999099868": "B2C",
+    "99909999099869": "Employees",
+    "50200109619138": "Primary"
+  },
+  "description": "Account number to account name mapping. Update this file to customize account names for different clients."
 }
 ```
+
+**Ways to Update Account Mapping**:
+1. **Via Web Interface**: Use the "Account Mapping Configuration" section on the HDFC processing page to edit and save mappings directly in the browser.
+2. **Manually Edit Config File**: Edit `HDFC/account_config.json` directly with your preferred text editor.
+3. **Via API**: Use the REST API endpoints:
+   - `GET /api/config/hdfc/account-mapping` - Get current mapping
+   - `POST /api/config/hdfc/account-mapping` - Update mapping
+
+The configuration is automatically loaded when processing statements, making it easy to switch between different client configurations.
 
 ### Processing Directory
 You can specify any directory containing Excel statement files:

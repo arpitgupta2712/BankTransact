@@ -1,0 +1,10 @@
+{
+  "account_mapping": {
+    "05722560003098": "Main",
+    "99909910666666": "Infra",
+    "99909910777777": "Sports",
+    "99909910888888": "Employees"
+  },
+  "description": "Account number to account name mapping for Itmagia Solutions Pvt Ltd. Update this file to customize account names for different clients."
+}
+

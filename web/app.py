@@ -8,6 +8,7 @@ import os
 import sys
 import shutil
 import tempfile
+import json
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file, render_template
 from werkzeug.utils import secure_filename
@@ -315,6 +316,69 @@ def cleanup_session(session_id):
         
         return jsonify({'success': True, 'message': 'Session cleaned up'})
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/config/hdfc/account-mapping', methods=['GET'])
+def get_account_mapping():
+    """Get current account mapping configuration"""
+    try:
+        config_path = Path(__file__).parent.parent / 'HDFC' / 'account_config.json'
+        
+        if not config_path.exists():
+            return jsonify({
+                'error': 'Config file not found',
+                'account_mapping': {}
+            }), 404
+        
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        
+        return jsonify({
+            'success': True,
+            'account_mapping': config.get('account_mapping', {}),
+            'description': config.get('description', '')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/config/hdfc/account-mapping', methods=['POST'])
+def update_account_mapping():
+    """Update account mapping configuration"""
+    try:
+        data = request.get_json()
+        account_mapping = data.get('account_mapping', {})
+        
+        if not account_mapping:
+            return jsonify({'error': 'account_mapping is required'}), 400
+        
+        config_path = Path(__file__).parent.parent / 'HDFC' / 'account_config.json'
+        
+        # Create config directory if it doesn't exist
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Load existing config or create new one
+        if config_path.exists():
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+        else:
+            config = {}
+        
+        # Update account mapping
+        config['account_mapping'] = account_mapping
+        config['description'] = data.get('description', config.get('description', 
+            'Account number to account name mapping. Update this file to customize account names for different clients.'))
+        
+        # Save config file
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Account mapping updated successfully',
+            'account_mapping': account_mapping
+        })
+    except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
