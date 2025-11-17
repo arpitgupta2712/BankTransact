@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import json
 from pathlib import Path
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 import traceback
 import zipfile
@@ -26,6 +26,13 @@ from src.AXIS.party_analysis import PartyAnalyzer
 from src.AXIS.create_party_summary import create_party_list
 
 app = Flask(__name__)
+
+# Enable CORS for Next.js frontend
+try:
+    from flask_cors import CORS
+    CORS(app)
+except ImportError:
+    print("Warning: flask-cors not installed. CORS disabled. Install with: pip install flask-cors")
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 app.config['UPLOAD_FOLDER'] = Path(__file__).parent / 'uploads'
 app.config['OUTPUT_FOLDER'] = Path(__file__).parent / 'outputs'
@@ -46,20 +53,8 @@ def allowed_file(filename, bank_type):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in AXIS_ALLOWED_EXTENSIONS
     return False
 
-@app.route('/')
-def index():
-    """Main index page"""
-    return render_template('index.html')
-
-@app.route('/hdfc')
-def hdfc_page():
-    """HDFC bank processing page"""
-    return render_template('hdfc.html')
-
-@app.route('/axis')
-def axis_page():
-    """AXIS bank processing page"""
-    return render_template('axis.html')
+# API-only routes - frontend is now in Next.js
+# These routes are kept for backward compatibility but can be removed
 
 @app.route('/api/upload/<bank_type>', methods=['POST'])
 def upload_files(bank_type):

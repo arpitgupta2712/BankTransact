@@ -3,6 +3,7 @@
 
 # Web Framework
 Flask>=2.3.0
+flask-cors>=4.0.0
 Werkzeug>=2.3.0
 
 # Data Processing
