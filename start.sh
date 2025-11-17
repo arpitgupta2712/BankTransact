@@ -24,7 +24,7 @@ source venv/bin/activate
 # Install/upgrade dependencies
 echo "📥 Installing dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r ../requirements.txt
 
 # Create necessary directories
 mkdir -p uploads

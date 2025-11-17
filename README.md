@@ -2,22 +2,43 @@
 
 A comprehensive web-based solution for processing and analyzing bank statements from multiple banks (AXIS and HDFC), featuring intelligent categorization, vendor detection, and detailed financial analytics.
 
+## 🏗 Architecture
+
+This is a **Flask web application** with a clear separation of concerns:
+
+```
+BankTransact/
+├── requirements.txt      # 📦 Single unified dependencies file
+├── start.sh              # 🚀 Start script
+│
+├── src/                  # 🔧 Backend Business Logic
+│   ├── HDFC/            # HDFC bank processor
+│   └── AXIS/             # AXIS bank processor
+│
+└── web/                  # 🌐 Flask Web Application
+    ├── app.py           # Flask server (API + serves frontend)
+    ├── templates/       # Frontend HTML templates
+    ├── uploads/         # Temporary uploads
+    └── outputs/         # Processed files
+```
+
+**Why this structure?**
+- `src/` = Pure Python business logic (no web dependencies)
+- `web/` = Flask app that serves both:
+  - **Backend API**: REST endpoints in `app.py`
+  - **Frontend**: HTML templates in `templates/`
+- This is the **standard Flask pattern** - one app serves both API and UI
+
 ## 🚀 Quick Start
 
 ### Start the Web App
 
-From the project root, simply run:
+From the project root:
 ```bash
 ./start.sh
 ```
 
-The app will:
-- Set up the virtual environment automatically
-- Install dependencies if needed
-- Start the Flask server on an available port (usually 5001)
-- Show you the URL to open in your browser
-
-**Open in browser**: `http://localhost:5001`
+Then open `http://localhost:5001` in your browser.
 
 ### Usage Steps
 
@@ -45,59 +66,54 @@ The app will:
 ## ✨ Key Features
 
 ### Web Application
-- **🌐 Modern Web Interface**: Accessible from any device with a browser
-- **🎯 Drag & Drop Upload**: Easy file upload interface
-- **⚙️ Account Configuration**: Configure account mappings via web UI (HDFC)
-- **📊 Real-time Processing**: Live status updates during processing
-- **📥 Download Results**: Download consolidated CSV and summary reports
-- **🔄 Session Management**: Automatic cleanup of temporary files
+- **🌐 Modern Web Interface**: Accessible from any device
+- **🎯 Drag & Drop Upload**: Easy file upload
+- **⚙️ Account Configuration**: Configure mappings via web UI (HDFC)
+- **📊 Real-time Processing**: Live status updates
+- **📥 Download Results**: Download CSV and summary reports
 
 ### Intelligent Categorization (HDFC)
-- **Main Categories**: 
-  - Primary Revenue (Venue Bookings, Online Booking Revenue)
-  - Personnel Costs (Salaries, Bonuses, Reimbursements)
-  - Operating Expenses (Software, Travel, Professional Fees)
-  - Cost of Revenue (Venue Infrastructure, Maintenance)
-  - Capital Expenditure (Vehicles, Equipment)
-  - Financing Activities (Loans, Internal Transfers)
-  - Statutory Payments (TDS, Tax Payments)
-- **Smart Vendor Detection**: Extracts vendor names from NEFT, IMPS, TPT, POS transactions
+- **Main Categories**: Primary Revenue, Personnel Costs, Operating Expenses, Cost of Revenue, Capital Expenditure, Financing Activities, Statutory Payments
+- **Smart Vendor Detection**: Extracts vendor names from transactions
 - **Flexible Configuration**: Update account mappings without code changes
 
 ### Advanced Analytics
-- **Transaction Classification**: Separate income and expense transactions
+- **Transaction Classification**: Separate income and expense
 - **Inter-bank Detection**: Identify transfers between accounts
 - **Reversal Detection**: Detect cancelled/failed transactions
 - **Party Analysis**: Extract and categorize party names (AXIS)
-- **Financial Summaries**: Generate detailed categorized financial reports
 
 ## 📁 Project Structure
 
 ```
 BankTransact/
-├── start.sh              # 🚀 Start web app (run from root)
-├── web/                  # 🌐 Web Application
-│   ├── app.py           # Flask backend server
-│   ├── templates/       # HTML templates
-│   ├── uploads/         # Temporary uploads (auto-cleaned)
-│   └── outputs/         # Processed files (auto-cleaned)
-└── src/                 # 📦 Source Code
-    ├── HDFC/            # 🏦 HDFC Bank Processing
-    │   ├── consolidate_statements.py
-    │   ├── enhance_transactions.py
-    │   └── account_config.json
-    └── AXIS/            # 🏦 AXIS Bank Processing
-        ├── run_complete_workflow.py
-        ├── consolidate_statements.py
-        ├── party_analysis.py
-        └── create_party_summary.py
+├── requirements.txt      # 📦 All dependencies (Flask, pandas, etc.)
+├── start.sh              # 🚀 Start web app
+│
+├── src/                  # 🔧 Backend Business Logic
+│   ├── HDFC/            # 🏦 HDFC Bank Processing
+│   │   ├── consolidate_statements.py
+│   │   ├── enhance_transactions.py
+│   │   └── account_config.json
+│   └── AXIS/            # 🏦 AXIS Bank Processing
+│       ├── run_complete_workflow.py
+│       ├── consolidate_statements.py
+│       ├── party_analysis.py
+│       └── create_party_summary.py
+│
+└── web/                  # 🌐 Flask Web Application
+    ├── app.py           # Flask server (API endpoints)
+    ├── templates/       # Frontend HTML/CSS/JS
+    │   ├── index.html
+    │   ├── hdfc.html
+    │   └── axis.html
+    ├── uploads/         # Temporary uploads (auto-cleaned)
+    └── outputs/         # Processed files (auto-cleaned)
 ```
 
 ## ⚙️ Configuration
 
 ### Account Mapping (HDFC)
-
-The account mapping configuration allows you to customize account names for different clients.
 
 **Location**: `src/HDFC/account_config.json`
 
@@ -113,12 +129,10 @@ The account mapping configuration allows you to customize account names for diff
 }
 ```
 
-**Ways to Update**:
-1. **Via Web Interface**: Use the "Account Mapping Configuration" section on the HDFC page
-2. **Manually**: Edit `src/HDFC/account_config.json` directly
-3. **Via API**: 
-   - `GET /api/config/hdfc/account-mapping` - Get current mapping
-   - `POST /api/config/hdfc/account-mapping` - Update mapping
+**Update via**:
+1. Web UI: Account Mapping Configuration section
+2. Manual: Edit `src/HDFC/account_config.json`
+3. API: `GET/POST /api/config/hdfc/account-mapping`
 
 ## 📊 Output Files
 
@@ -133,15 +147,13 @@ The account mapping configuration allows you to customize account names for diff
 - `axis_income_with_parties.csv` - Income with party categorization
 - `party_list_summary.csv` - Party analysis summary
 - `consolidation_summary.txt` - Processing summary
-- `party_wise_income_summary.txt` - Party analysis report
 
 ## 🔧 Technical Details
 
 ### Requirements
 - **Python**: 3.9+
-- **Flask**: 2.3.0+
-- **Dependencies**: pandas, openpyxl, xlrd, numpy
-- **Browser**: Modern browser with JavaScript enabled
+- **Dependencies**: See `requirements.txt` (Flask, pandas, openpyxl, xlrd, numpy)
+- **Browser**: Modern browser with JavaScript
 
 ### File Formats
 - **HDFC**: `.xls`, `.xlsx` (Excel files)
@@ -149,18 +161,16 @@ The account mapping configuration allows you to customize account names for diff
 
 ### API Endpoints
 - `GET /` - Main index page
-- `GET /hdfc` - HDFC bank processing page
-- `GET /axis` - AXIS bank processing page
+- `GET /hdfc` - HDFC processing page
+- `GET /axis` - AXIS processing page
 - `POST /api/upload/<bank_type>` - Upload files
 - `POST /api/process/<bank_type>` - Process statements
-- `GET /api/download/<filename>` - Download processed files
+- `GET /api/download/<filename>` - Download files
 - `GET /api/config/hdfc/account-mapping` - Get account mapping
 - `POST /api/config/hdfc/account-mapping` - Update account mapping
-- `POST /api/cleanup/<session_id>` - Clean up session files
+- `POST /api/cleanup/<session_id>` - Clean up session
 
 ## 🛠 Command Line Usage (Alternative)
-
-If you prefer command line processing:
 
 ```bash
 # HDFC Bank Processing
@@ -181,48 +191,34 @@ python3 run_complete_workflow.py
 - **No Network Access**: No external data transmission
 - **Temporary Cleanup**: Automatic cleanup of uploaded files
 - **Git Ignored**: Sensitive files excluded from version control
-- **Session Management**: Files stored temporarily in `web/uploads/` and `web/outputs/`
 
 ## ⚠️ Troubleshooting
 
 ### Port Already in Use
-The app automatically finds a free port starting from 5001. If needed, modify `web/app.py`:
-```python
-port = find_free_port(8080)  # Start from port 8080
-```
+App automatically finds free port starting from 5001.
 
 ### Import Errors
-Make sure you're running `./start.sh` from the project root. The script handles all path setup automatically.
+Run `./start.sh` from project root - it handles all setup automatically.
 
 ### File Upload Issues
-- Check file size (max 100MB per file)
-- Ensure file extensions match (.xls/.xlsx for HDFC, .csv/.txt for AXIS)
+- Max file size: 100MB
+- File extensions: .xls/.xlsx for HDFC, .csv/.txt for AXIS
 - Check browser console (F12) for errors
-- Check terminal output for Python errors
-
-### Files Not Processing
-- Verify file formats match bank type
-- Check that account mapping is configured (HDFC)
-- Review terminal output for detailed error messages
 
 ## 🚀 Development
 
 ### Adding New Banks
 1. Create bank directory in `src/`
-2. Implement consolidation script
-3. Add bank support to `web/app.py`
-4. Create HTML template in `web/templates/`
-5. Update account configuration if needed
+2. Implement processor in `src/<BANK>/consolidate_statements.py`
+3. Add routes to `web/app.py`
+4. Create template in `web/templates/`
+5. Update account config if needed
 
 ### Code Structure
-- **Backend**: Python scripts in `src/` directories
-- **Web Server**: Flask app in `web/app.py`
-- **Frontend**: Pure HTML/CSS/JavaScript in `web/templates/`
-- **Configuration**: JSON config files in bank directories
-
-## 📄 License
-
-MIT License
+- **Backend Logic**: `src/` - Pure Python, no web dependencies
+- **Web Server**: `web/app.py` - Flask API endpoints
+- **Frontend**: `web/templates/` - HTML/CSS/JavaScript
+- **Configuration**: JSON files in bank directories
 
 ---
 

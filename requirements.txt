@@ -1,0 +1,18 @@
+# BankTransact - Unified Requirements
+# All dependencies for web app and bank processors
+
+# Web Framework
+Flask>=2.3.0
+Werkzeug>=2.3.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.20.0
+
+# Excel File Handling
+openpyxl>=3.1.0
+xlrd>=2.0.0
+
+# Production Server
+gunicorn>=21.2.0
+

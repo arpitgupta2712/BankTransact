@@ -17,7 +17,8 @@ class AXISWorkflow:
         self.project_dir = Path(__file__).parent
         self.data_dir = self.project_dir / "data"
         self.venv_dir = self.project_dir / "axis_env"
-        self.requirements_file = self.project_dir / "requirements.txt"
+        # Requirements are now in project root
+        self.requirements_file = self.project_dir.parent.parent / "requirements.txt"
         
     def print_header(self, title):
         """Print a formatted header"""

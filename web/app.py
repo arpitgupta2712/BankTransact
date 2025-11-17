@@ -384,22 +384,29 @@ def update_account_mapping():
 if __name__ == '__main__':
     import socket
     
-    def find_free_port(start_port=5001, max_attempts=10):
-        """Find a free port starting from start_port"""
-        for port in range(start_port, start_port + max_attempts):
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.bind(('', port))
-                    return port
-            except OSError:
-                continue
-        return None
-    
-    # Try to find a free port (starting from 5001 to avoid AirPlay on macOS)
-    port = find_free_port(5001)
-    if port is None:
-        print("❌ Error: Could not find a free port")
-        sys.exit(1)
+    # Use PORT from environment (Heroku) or find free port (local development)
+    port = os.environ.get('PORT')
+    if port:
+        port = int(port)
+        debug = False  # Production mode
+    else:
+        # Local development: find free port
+        def find_free_port(start_port=5001, max_attempts=10):
+            """Find a free port starting from start_port"""
+            for port in range(start_port, start_port + max_attempts):
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.bind(('', port))
+                        return port
+                except OSError:
+                    continue
+            return None
+        
+        port = find_free_port(5001)
+        if port is None:
+            print("❌ Error: Could not find a free port")
+            sys.exit(1)
+        debug = True  # Development mode
     
     print("=" * 60)
     print("🚀 Bank Statement Consolidation Web App")
@@ -408,5 +415,5 @@ if __name__ == '__main__':
     print(f"📁 Output folder: {app.config['OUTPUT_FOLDER']}")
     print(f"🌐 Starting server on http://localhost:{port}")
     print("=" * 60)
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=debug, host='0.0.0.0', port=port)
 
