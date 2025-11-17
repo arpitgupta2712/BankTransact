@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import json
 from pathlib import Path
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 from werkzeug.utils import secure_filename
 import traceback
 import zipfile
@@ -53,8 +53,23 @@ def allowed_file(filename, bank_type):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in AXIS_ALLOWED_EXTENSIONS
     return False
 
-# API-only routes - frontend is now in Next.js
-# These routes are kept for backward compatibility but can be removed
+# Frontend routes - serve HTML templates
+@app.route('/')
+def index():
+    """Serve main index page"""
+    return render_template('index.html')
+
+@app.route('/hdfc')
+def hdfc_page():
+    """Serve HDFC processing page"""
+    return render_template('hdfc.html')
+
+@app.route('/axis')
+def axis_page():
+    """Serve AXIS processing page"""
+    return render_template('axis.html')
+
+# API routes
 
 @app.route('/api/upload/<bank_type>', methods=['POST'])
 def upload_files(bank_type):
