@@ -20,10 +20,10 @@ from io import BytesIO
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import consolidation processors
-from HDFC.consolidate_statements import HDFCStatementProcessor
-from AXIS.consolidate_statements import AXISStatementProcessor
-from AXIS.party_analysis import PartyAnalyzer
-from AXIS.create_party_summary import create_party_list
+from src.HDFC.consolidate_statements import HDFCStatementProcessor
+from src.AXIS.consolidate_statements import AXISStatementProcessor
+from src.AXIS.party_analysis import PartyAnalyzer
+from src.AXIS.create_party_summary import create_party_list
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
@@ -322,7 +322,7 @@ def cleanup_session(session_id):
 def get_account_mapping():
     """Get current account mapping configuration"""
     try:
-        config_path = Path(__file__).parent.parent / 'HDFC' / 'account_config.json'
+        config_path = Path(__file__).parent.parent / 'src' / 'HDFC' / 'account_config.json'
         
         if not config_path.exists():
             return jsonify({
@@ -351,7 +351,7 @@ def update_account_mapping():
         if not account_mapping:
             return jsonify({'error': 'account_mapping is required'}), 400
         
-        config_path = Path(__file__).parent.parent / 'HDFC' / 'account_config.json'
+        config_path = Path(__file__).parent.parent / 'src' / 'HDFC' / 'account_config.json'
         
         # Create config directory if it doesn't exist
         config_path.parent.mkdir(parents=True, exist_ok=True)

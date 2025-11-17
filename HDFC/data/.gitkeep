@@ -1,3 +1,0 @@
-# This file ensures the data directory is tracked in git
-# Place your bank statements and output files here
-# Note: .xls, .csv, and .txt files in this directory are excluded by .gitignore for security

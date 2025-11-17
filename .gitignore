@@ -183,29 +183,47 @@ $RECYCLE.BIN/
 *.swo
 
 # Project specific - exclude sensitive financial data
-# Bank statement files (sensitive financial data)
-data/statements/*.xls
-data/statements/*.xlsx
-data/statements/*.CSV
-data/statements/*.csv
+# Note: Data directories removed - web app uses web/uploads/ and web/outputs/
+# Legacy data directories (if recreated, exclude them)
+data/
+src/AXIS/data/
+src/HDFC/data/
 
-# Output files (contain sensitive financial information)
-data/consolidated_bank_statements.csv
-data/consolidation_summary.txt
-data/consolidated_axis_statements.csv
-data/axis_income_transactions.csv
-data/axis_expense_transactions.csv
+# Web app uploads and outputs (sensitive financial data)
+web/uploads/
+web/outputs/
 
-# Exclude all CSV and TXT files from the entire app
+# Exclude all Excel and CSV files globally (sensitive financial data)
+*.xls
+*.xlsx
+*.XLS
+*.XLSX
 *.csv
+*.CSV
+
+# Exclude all TXT files (may contain sensitive summaries)
 *.txt
+*.TXT
 
 # But keep important project files
 !.gitkeep
 !requirements.txt
+!README.md
+!QUICKSTART.md
 
 # Sensitive data
 config.py
 secrets.py
 .env.local
 *.key
+
+# macOS App (replaced by web app)
+BankTransactApp/
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserdata/
+*.xcuserstate
+*.profraw
+
+# Legacy scripts directory (removed - using start.sh in root)
+scripts/

@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # Script to run the Bank Statement Consolidation Web App
+# Run from project root: ./start.sh
 
 echo "=========================================="
 echo "🚀 Starting Bank Statement Consolidation Web App"
 echo "=========================================="
 
-# Get the directory where this script is located
+# Get the directory where this script is located (project root)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+cd "$SCRIPT_DIR/web"
 
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
@@ -25,25 +26,6 @@ echo "📥 Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Also ensure parent directory dependencies are available
-echo "📥 Installing HDFC dependencies..."
-cd ../HDFC
-if [ -d "venv" ] || [ -d "../finance_env" ]; then
-    # Use existing venv if available
-    echo "✅ Using existing HDFC environment"
-else
-    echo "⚠️  Note: HDFC processing requires dependencies in finance_env"
-fi
-
-cd ../AXIS
-if [ -d "axis_env" ]; then
-    echo "✅ Using existing AXIS environment"
-else
-    echo "⚠️  Note: AXIS processing requires dependencies in axis_env"
-fi
-
-cd "$SCRIPT_DIR"
-
 # Create necessary directories
 mkdir -p uploads
 mkdir -p outputs
@@ -53,8 +35,8 @@ echo ""
 echo "🌐 Starting Flask server..."
 echo "📍 The app will automatically find an available port (usually 5001)"
 echo "📍 Check the output above for the exact URL to open in your browser"
+echo "📍 Open http://localhost:5001 in your browser"
 echo "=========================================="
 echo ""
 
 python3 app.py
-

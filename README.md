@@ -1,221 +1,229 @@
 # BankTransact - Bank Statement Processing Suite
 
-A comprehensive solution for processing and analyzing bank statements from multiple banks, featuring both Python backend scripts and a native macOS SwiftUI application.
+A comprehensive web-based solution for processing and analyzing bank statements from multiple banks (AXIS and HDFC), featuring intelligent categorization, vendor detection, and detailed financial analytics.
 
-## 🚀 Version 2.0.0 - Major Release
+## 🚀 Quick Start
 
-### ✨ What's New in v2.0.0
-- **🎯 Native macOS App**: Complete SwiftUI application for seamless user experience
-- **🔄 Multi-Bank Support**: Process AXIS and HDFC bank statements
-- **📊 Advanced Analytics**: Party analysis, transaction categorization, and detailed reporting
-- **⚡ Real-time Processing**: Live progress tracking with comprehensive debug output
-- **📁 Smart File Management**: Integrated file viewer and desktop export functionality
+### Start the Web App
 
-## 🏗 Architecture
+From the project root, simply run:
+```bash
+./start.sh
+```
 
-### Frontend: SwiftUI macOS App
-- **Location**: `BankTransactApp/`
-- **Framework**: SwiftUI for macOS
-- **Features**: Native UI, real-time processing, file management
-- **Documentation**: [BankTransactApp/README.md](BankTransactApp/README.md)
+The app will:
+- Set up the virtual environment automatically
+- Install dependencies if needed
+- Start the Flask server on an available port (usually 5001)
+- Show you the URL to open in your browser
 
-### Backend: Python Processing Scripts
-- **AXIS Bank**: `AXIS/` - Complete workflow with party analysis
-- **HDFC Bank**: `HDFC/` - Statement consolidation and analysis
-- **Features**: Virtual environments, comprehensive reporting, data validation
+**Open in browser**: `http://localhost:5001`
 
-## 📊 Processing Capabilities
+### Usage Steps
 
-### Statement Processing
-- ✅ **Multi-file Consolidation**: Merge multiple statement files
-- ✅ **Transaction Classification**: Separate income and expense transactions
-- ✅ **Balance Verification**: Validate opening/closing balances
-- ✅ **Data Validation**: Comprehensive error checking and reporting
+1. **Choose Bank Type**
+   - Click "HDFC Bank" for Excel files (.xls, .xlsx)
+   - Click "AXIS Bank" for CSV files (.csv, .txt)
+
+2. **Upload Files**
+   - Drag and drop statement files or click to browse
+   - Upload multiple files at once
+
+3. **Configure (HDFC only)**
+   - Click "Show/Hide" in Account Mapping Configuration
+   - Update account mappings if needed
+   - Click "Save Configuration"
+
+4. **Process**
+   - Click "Process Statements"
+   - Wait for processing to complete
+
+5. **Download Results**
+   - Download consolidated CSV file
+   - Download summary report
+
+## ✨ Key Features
+
+### Web Application
+- **🌐 Modern Web Interface**: Accessible from any device with a browser
+- **🎯 Drag & Drop Upload**: Easy file upload interface
+- **⚙️ Account Configuration**: Configure account mappings via web UI (HDFC)
+- **📊 Real-time Processing**: Live status updates during processing
+- **📥 Download Results**: Download consolidated CSV and summary reports
+- **🔄 Session Management**: Automatic cleanup of temporary files
+
+### Intelligent Categorization (HDFC)
+- **Main Categories**: 
+  - Primary Revenue (Venue Bookings, Online Booking Revenue)
+  - Personnel Costs (Salaries, Bonuses, Reimbursements)
+  - Operating Expenses (Software, Travel, Professional Fees)
+  - Cost of Revenue (Venue Infrastructure, Maintenance)
+  - Capital Expenditure (Vehicles, Equipment)
+  - Financing Activities (Loans, Internal Transfers)
+  - Statutory Payments (TDS, Tax Payments)
+- **Smart Vendor Detection**: Extracts vendor names from NEFT, IMPS, TPT, POS transactions
+- **Flexible Configuration**: Update account mappings without code changes
 
 ### Advanced Analytics
-- ✅ **Party Analysis**: Extract and categorize party names
-- ✅ **Transaction Patterns**: Identify recurring transactions
-- ✅ **Financial Summaries**: Generate detailed financial reports
-- ✅ **Export Options**: Multiple output formats (CSV, TXT)
-
-### Output Files Generated
-- `consolidated_[bank]_statements.csv` - Merged statement data
-- `[bank]_income_transactions.csv` - Income analysis
-- `[bank]_income_with_parties.csv` - Party-categorized income
-- `party_list_summary.csv` - Party analysis summary
-- `consolidation_summary.txt` - Processing summary
-- `party_wise_income_summary.txt` - Party analysis report
-
-## 🛠 Quick Start
-
-### Option 1: macOS App (Recommended)
-1. **Open the App**: Launch `BankTransactApp/BankTransactApp.xcodeproj` in Xcode
-2. **Build & Run**: Press ⌘+R to build and run
-3. **Select Bank**: Choose AXIS or HDFC
-4. **Upload Files**: Select your CSV statement files
-5. **Process**: Click "Process Statements" and watch real-time progress
-6. **View Results**: Check generated files in the app or on desktop
-
-### Option 2: Command Line
-```bash
-# AXIS Bank Processing
-cd AXIS
-python3 run_complete_workflow.py
-
-# HDFC Bank Processing
-cd HDFC
-python3 consolidate_statements.py
-```
+- **Transaction Classification**: Separate income and expense transactions
+- **Inter-bank Detection**: Identify transfers between accounts
+- **Reversal Detection**: Detect cancelled/failed transactions
+- **Party Analysis**: Extract and categorize party names (AXIS)
+- **Financial Summaries**: Generate detailed categorized financial reports
 
 ## 📁 Project Structure
 
 ```
 BankTransact/
-├── BankTransactApp/                    # 🎯 SwiftUI macOS Application
-│   ├── BankTransactApp.xcodeproj/      # Xcode project
-│   ├── BankTransactApp/                # App source code
-│   └── README.md                       # App documentation
-├── AXIS/                               # 🏦 AXIS Bank Processing
-│   ├── run_complete_workflow.py        # Main workflow script
-│   ├── consolidate_statements.py       # Statement consolidation
-│   ├── party_analysis.py              # Party name analysis
-│   ├── create_party_summary.py        # Party summary generation
-│   ├── data/                          # Output directories
-│   └── axis_env/                      # Python virtual environment
-├── HDFC/                              # 🏦 HDFC Bank Processing
-│   ├── consolidate_statements.py       # HDFC consolidation
-│   ├── data/                          # Output directories
-│   └── README.md                      # HDFC documentation
-├── scripts/                           # 🔧 Utility scripts
-│   ├── build_and_run.sh              # App build script
-│   └── README.md                      # Scripts documentation
-└── README.md                          # This file
+├── start.sh              # 🚀 Start web app (run from root)
+├── web/                  # 🌐 Web Application
+│   ├── app.py           # Flask backend server
+│   ├── templates/       # HTML templates
+│   ├── uploads/         # Temporary uploads (auto-cleaned)
+│   └── outputs/         # Processed files (auto-cleaned)
+└── src/                 # 📦 Source Code
+    ├── HDFC/            # 🏦 HDFC Bank Processing
+    │   ├── consolidate_statements.py
+    │   ├── enhance_transactions.py
+    │   └── account_config.json
+    └── AXIS/            # 🏦 AXIS Bank Processing
+        ├── run_complete_workflow.py
+        ├── consolidate_statements.py
+        ├── party_analysis.py
+        └── create_party_summary.py
 ```
 
-## 🎯 Key Features
+## ⚙️ Configuration
 
-### SwiftUI App Features
-- **Multi-Bank Support**: Process AXIS and HDFC statements
-- **File Upload**: Drag & drop or select CSV files
-- **Real-time Progress**: Live status updates and debug output
-- **Integrated Viewer**: View and open generated files
-- **Desktop Export**: Automatic file organization on desktop
-- **Error Handling**: Comprehensive error reporting and recovery
+### Account Mapping (HDFC)
 
-### Python Script Features
-- **Virtual Environments**: Isolated Python environments per bank
-- **Data Validation**: Balance verification and transaction integrity
-- **Party Analysis**: Advanced party name extraction and categorization
-- **Comprehensive Reporting**: Detailed analysis and summary reports
-- **Flexible Output**: Multiple file formats and export options
+The account mapping configuration allows you to customize account names for different clients.
 
-## 🔧 Technical Requirements
+**Location**: `src/HDFC/account_config.json`
 
-### macOS App
-- **macOS**: 15.5+
-- **Xcode**: 15.0+
-- **Swift**: 5.5+
+**Format**:
+```json
+{
+  "account_mapping": {
+    "05722560003098": "Main",
+    "99909910666666": "Infra",
+    "99909910777777": "Sports",
+    "99909910888888": "Employees"
+  }
+}
+```
 
-### Python Scripts
-- **Python**: 3.11+
-- **Dependencies**: pandas, numpy (installed in virtual environments)
-- **Virtual Environments**: Pre-configured for each bank
+**Ways to Update**:
+1. **Via Web Interface**: Use the "Account Mapping Configuration" section on the HDFC page
+2. **Manually**: Edit `src/HDFC/account_config.json` directly
+3. **Via API**: 
+   - `GET /api/config/hdfc/account-mapping` - Get current mapping
+   - `POST /api/config/hdfc/account-mapping` - Update mapping
 
-## 📈 Performance Metrics
+## 📊 Output Files
 
-### Processing Speed
-- **AXIS Bank**: ~5000 transactions in ~30 seconds
-- **HDFC Bank**: ~2000 transactions in ~15 seconds
-- **Party Analysis**: Real-time processing with live updates
+### HDFC Processing
+- `consolidated_bank_statements.csv` - Merged statement data
+- `consolidated_bank_statements_enhanced.csv` - With categorization and vendor names
+- `consolidation_summary.txt` - Processing summary
 
-### File Handling
-- **Input**: Multiple CSV statement files
-- **Output**: 8+ organized files per processing run
-- **Storage**: Efficient local processing with desktop export
+### AXIS Processing
+- `consolidated_axis_statements.csv` - Merged statement data
+- `axis_income_transactions.csv` - Income analysis
+- `axis_income_with_parties.csv` - Income with party categorization
+- `party_list_summary.csv` - Party analysis summary
+- `consolidation_summary.txt` - Processing summary
+- `party_wise_income_summary.txt` - Party analysis report
+
+## 🔧 Technical Details
+
+### Requirements
+- **Python**: 3.9+
+- **Flask**: 2.3.0+
+- **Dependencies**: pandas, openpyxl, xlrd, numpy
+- **Browser**: Modern browser with JavaScript enabled
+
+### File Formats
+- **HDFC**: `.xls`, `.xlsx` (Excel files)
+- **AXIS**: `.csv`, `.txt` (CSV files)
+
+### API Endpoints
+- `GET /` - Main index page
+- `GET /hdfc` - HDFC bank processing page
+- `GET /axis` - AXIS bank processing page
+- `POST /api/upload/<bank_type>` - Upload files
+- `POST /api/process/<bank_type>` - Process statements
+- `GET /api/download/<filename>` - Download processed files
+- `GET /api/config/hdfc/account-mapping` - Get account mapping
+- `POST /api/config/hdfc/account-mapping` - Update account mapping
+- `POST /api/cleanup/<session_id>` - Clean up session files
+
+## 🛠 Command Line Usage (Alternative)
+
+If you prefer command line processing:
+
+```bash
+# HDFC Bank Processing
+cd src/HDFC
+python3 consolidate_statements.py
+
+# Enhanced Analysis (HDFC)
+python3 enhance_transactions.py consolidated_statements.csv
+
+# AXIS Bank Processing
+cd src/AXIS
+python3 run_complete_workflow.py
+```
 
 ## 🔒 Security & Privacy
 
-### Data Protection
 - **Local Processing**: All data processed locally
 - **No Network Access**: No external data transmission
-- **File Permissions**: Secure file system access
-- **Temporary Cleanup**: Automatic cleanup of temporary files
+- **Temporary Cleanup**: Automatic cleanup of uploaded files
+- **Git Ignored**: Sensitive files excluded from version control
+- **Session Management**: Files stored temporarily in `web/uploads/` and `web/outputs/`
 
-### App Security
-- **Sandbox Configuration**: Development-optimized permissions
-- **File System Access**: Controlled access to project directories
-- **Process Isolation**: Secure Python script execution
+## ⚠️ Troubleshooting
 
-## 🚀 Getting Started
+### Port Already in Use
+The app automatically finds a free port starting from 5001. If needed, modify `web/app.py`:
+```python
+port = find_free_port(8080)  # Start from port 8080
+```
 
-### For Users
-1. **Download**: Clone or download the repository
-2. **Setup**: Follow the [BankTransactApp README](BankTransactApp/README.md)
-3. **Run**: Launch the SwiftUI app and start processing
+### Import Errors
+Make sure you're running `./start.sh` from the project root. The script handles all path setup automatically.
 
-### For Developers
-1. **Environment**: Set up Xcode and Python environments
-2. **Build**: Build the SwiftUI app and test Python scripts
-3. **Extend**: Add support for additional banks or features
+### File Upload Issues
+- Check file size (max 100MB per file)
+- Ensure file extensions match (.xls/.xlsx for HDFC, .csv/.txt for AXIS)
+- Check browser console (F12) for errors
+- Check terminal output for Python errors
 
-## 🔄 Version History
+### Files Not Processing
+- Verify file formats match bank type
+- Check that account mapping is configured (HDFC)
+- Review terminal output for detailed error messages
 
-### v2.0.0 (Current) - Major Release
-- ✅ **Native macOS App**: Complete SwiftUI application
-- ✅ **Multi-Bank Support**: AXIS and HDFC processing
-- ✅ **Advanced Analytics**: Party analysis and categorization
-- ✅ **Real-time Processing**: Live progress tracking
-- ✅ **Integrated UI**: File management and viewer
-- ✅ **Desktop Export**: Automatic file organization
-- ✅ **Comprehensive Debug**: Real-time output monitoring
-
-### v1.x.x (Previous)
-- Python-only implementation
-- Command-line interface
-- Basic consolidation features
-- Single-bank support
-
-## 🤝 Contributing
-
-### Development Guidelines
-- **Swift**: Follow Swift coding conventions and MVVM architecture
-- **Python**: Maintain virtual environments and dependency management
-- **Documentation**: Update README files for new features
-- **Testing**: Test both app and scripts before committing
+## 🚀 Development
 
 ### Adding New Banks
-1. Create bank-specific directory with Python scripts
-2. Set up virtual environment with required dependencies
-3. Implement consolidation and analysis scripts
-4. Add bank support to SwiftUI app
-5. Update documentation and test thoroughly
+1. Create bank directory in `src/`
+2. Implement consolidation script
+3. Add bank support to `web/app.py`
+4. Create HTML template in `web/templates/`
+5. Update account configuration if needed
+
+### Code Structure
+- **Backend**: Python scripts in `src/` directories
+- **Web Server**: Flask app in `web/app.py`
+- **Frontend**: Pure HTML/CSS/JavaScript in `web/templates/`
+- **Configuration**: JSON config files in bank directories
 
 ## 📄 License
 
-This project is licensed under the MIT License. See LICENSE file for details.
-
-## 🆘 Support
-
-### Troubleshooting
-1. **App Issues**: Check debug output in terminal
-2. **Python Scripts**: Verify virtual environment setup
-3. **File Permissions**: Ensure proper file system access
-4. **Performance**: Monitor system resources during processing
-
-### Documentation
-- [BankTransactApp README](BankTransactApp/README.md) - SwiftUI app details
-- [HDFC README](HDFC/README.md) - HDFC bank processing
-- [Scripts README](scripts/README.md) - Utility scripts
+MIT License
 
 ---
 
-## 🎉 Success Story
-
-**BankTransact v2.0.0** represents a major evolution from a Python-only solution to a comprehensive banking analysis suite with a native macOS application. The integration of SwiftUI frontend with Python backend provides users with:
-
-- **Seamless Experience**: Native macOS app with familiar interface
-- **Powerful Processing**: Advanced Python analytics and party analysis
-- **Real-time Feedback**: Live progress tracking and debug output
-- **Professional Output**: Organized files with comprehensive reporting
-
-**Built with ❤️ using SwiftUI and Python**
+**Built with ❤️ using Flask, Python, and modern web technologies**
